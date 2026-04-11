@@ -1,0 +1,233 @@
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Globe, Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { signIn, signUp, resetPassword } from '../lib/supabase'
+import toast from 'react-hot-toast'
+
+function AuthLayout({ children, title, subtitle }) {
+  return (
+    <div className="min-h-screen hero-bg flex items-center justify-center px-4 py-20">
+      <div className="dot-pattern absolute inset-0 opacity-20" />
+      <div className="w-full max-w-md relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 justify-center mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center">
+              <Globe size={22} className="text-navy-950" />
+            </div>
+            <span className="font-display text-2xl font-bold text-white">GlobalVisa Pro</span>
+          </Link>
+
+          <div className="glass rounded-2xl p-8">
+            <h1 className="font-display text-3xl font-bold text-white mb-2 text-center">{title}</h1>
+            <p className="text-slate-400 text-center text-sm mb-8">{subtitle}</p>
+            {children}
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+export function LoginPage() {
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    const { data, error } = await signIn(form.email, form.password)
+    setLoading(false)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Welcome back!')
+      navigate('/dashboard')
+    }
+  }
+
+  return (
+    <AuthLayout title="Welcome Back" subtitle="Sign in to access your immigration dashboard">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="label">Email Address</label>
+          <div className="relative">
+            <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              className="input-glass pl-10"
+              type="email"
+              placeholder="john@email.com"
+              value={form.email}
+              onChange={e => setForm({...form, email: e.target.value})}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="label mb-0">Password</label>
+            <Link to="/forgot-password" className="text-xs text-gold-400 hover:text-gold-300">Forgot password?</Link>
+          </div>
+          <div className="relative">
+            <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              className="input-glass pl-10 pr-10"
+              type={showPass ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={form.password}
+              onChange={e => setForm({...form, password: e.target.value})}
+              required
+            />
+            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+              {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+        <button type="submit" disabled={loading} className="btn-primary w-full">
+          {loading ? 'Signing In...' : 'Sign In'}
+        </button>
+      </form>
+      <p className="text-center text-slate-400 text-sm mt-6">
+        Don't have an account?{' '}
+        <Link to="/signup" className="text-gold-400 hover:text-gold-300 font-semibold">Create Account</Link>
+      </p>
+    </AuthLayout>
+  )
+}
+
+export function SignupPage() {
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (form.password !== form.confirm) {
+      toast.error('Passwords do not match')
+      return
+    }
+    setLoading(true)
+    const { data, error } = await signUp(form.email, form.password, form.name)
+    setLoading(false)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Account created! Check your email to verify.')
+      navigate('/login')
+    }
+  }
+
+  return (
+    <AuthLayout title="Create Account" subtitle="Start your immigration journey with GlobalVisa Pro">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="label">Full Name</label>
+          <div className="relative">
+            <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input className="input-glass pl-10" placeholder="John Smith" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+          </div>
+        </div>
+        <div>
+          <label className="label">Email Address</label>
+          <div className="relative">
+            <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input className="input-glass pl-10" type="email" placeholder="john@email.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
+          </div>
+        </div>
+        <div>
+          <label className="label">Password</label>
+          <div className="relative">
+            <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              className="input-glass pl-10 pr-10"
+              type={showPass ? 'text' : 'password'}
+              placeholder="Min. 8 characters"
+              value={form.password}
+              onChange={e => setForm({...form, password: e.target.value})}
+              minLength="8"
+              required
+            />
+            <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+              {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+        <div>
+          <label className="label">Confirm Password</label>
+          <div className="relative">
+            <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input className="input-glass pl-10" type={showPass ? 'text' : 'password'} placeholder="Repeat password" value={form.confirm} onChange={e => setForm({...form, confirm: e.target.value})} required />
+          </div>
+        </div>
+        <button type="submit" disabled={loading} className="btn-primary w-full mt-2">
+          {loading ? 'Creating Account...' : 'Create Account'}
+        </button>
+      </form>
+      <p className="text-center text-slate-400 text-sm mt-6">
+        Already have an account?{' '}
+        <Link to="/login" className="text-gold-400 hover:text-gold-300 font-semibold">Sign In</Link>
+      </p>
+    </AuthLayout>
+  )
+}
+
+export function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    const { error } = await resetPassword(email)
+    setLoading(false)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      setSent(true)
+    }
+  }
+
+  return (
+    <AuthLayout title="Reset Password" subtitle="Enter your email and we'll send a reset link">
+      {sent ? (
+        <div className="text-center py-4">
+          <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center mx-auto mb-4">
+            <Mail size={28} className="text-teal-400" />
+          </div>
+          <h3 className="text-white font-semibold mb-2">Check Your Email</h3>
+          <p className="text-slate-400 text-sm mb-6">We've sent a password reset link to <span className="text-gold-400">{email}</span></p>
+          <Link to="/login">
+            <button className="btn-outline w-full">Back to Login</button>
+          </Link>
+        </div>
+      ) : (
+        <>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="label">Email Address</label>
+              <div className="relative">
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input className="input-glass pl-10" type="email" placeholder="john@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
+              </div>
+            </div>
+            <button type="submit" disabled={loading} className="btn-primary w-full">
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </form>
+          <Link to="/login" className="flex items-center justify-center gap-2 text-slate-400 text-sm mt-6 hover:text-slate-200">
+            <ArrowLeft size={14} /> Back to Login
+          </Link>
+        </>
+      )}
+    </AuthLayout>
+  )
+}

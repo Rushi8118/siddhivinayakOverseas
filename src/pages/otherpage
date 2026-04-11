@@ -1,0 +1,448 @@
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { CheckCircle, Upload, Clock, ArrowRight, Search, Calendar, Tag, MapPin, Phone, Mail, MessageCircle } from 'lucide-react'
+import toast from 'react-hot-toast'
+
+// ═══════════════════════════════════════
+// APPLICATION PAGE
+// ═══════════════════════════════════════
+const steps = ['Personal Info', 'Education', 'Work Experience', 'Travel History', 'Documents', 'Review']
+
+export function ApplicationPage() {
+  const [currentStep, setCurrentStep] = useState(0)
+  const [form, setForm] = useState({
+    firstName: '', lastName: '', email: '', phone: '', dob: '', nationality: '',
+    passport: '', passportExpiry: '', address: '',
+    education: '', university: '', gradYear: '', degree: '',
+    employer: '', jobTitle: '', experience: '', salary: '',
+    previousVisa: '', refusals: '',
+    files: [],
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  const handleNext = () => setCurrentStep(s => Math.min(s + 1, steps.length - 1))
+  const handleBack = () => setCurrentStep(s => Math.max(s - 1, 0))
+
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    await new Promise(r => setTimeout(r, 2000))
+    setSubmitting(false)
+    setSubmitted(true)
+    toast.success('Application submitted successfully!')
+  }
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-navy-950 pt-32 flex items-center justify-center px-4">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass rounded-2xl p-12 max-w-lg w-full text-center">
+          <div className="w-20 h-20 rounded-full bg-teal-500/20 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={40} className="text-teal-400" />
+          </div>
+          <h2 className="font-display text-3xl font-bold text-white mb-3">Application Submitted!</h2>
+          <p className="text-slate-400 mb-2">Your application ID: <span className="text-gold-400 font-mono">GVP-2025-{Math.floor(Math.random() * 100000)}</span></p>
+          <p className="text-slate-400 text-sm mb-8">Our team will review your application within 24 hours and contact you via email.</p>
+          <button onClick={() => { setSubmitted(false); setCurrentStep(0) }} className="btn-outline w-full">Submit Another</button>
+        </motion.div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-navy-950 pt-20 pb-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+        <div className="text-center mb-10">
+          <div className="badge badge-gold mx-auto mb-4">Online Application</div>
+          <h1 className="font-display text-4xl font-bold text-white mb-2">Visa Application Form</h1>
+          <p className="text-slate-400">Complete all sections to submit your application</p>
+        </div>
+
+        {/* Progress */}
+        <div className="glass rounded-2xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-slate-400">Step {currentStep + 1} of {steps.length}</span>
+            <span className="text-sm text-gold-400">{steps[currentStep]}</span>
+          </div>
+          <div className="flex gap-1">
+            {steps.map((s, i) => (
+              <div key={s} className="flex-1 h-1.5 rounded-full transition-all duration-300"
+                style={{ background: i <= currentStep ? 'linear-gradient(90deg, #f59e0b, #14b8a6)' : 'rgba(255,255,255,0.1)' }} />
+            ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            {steps.map((s, i) => (
+              <span key={s} className={`text-xs ${i === currentStep ? 'text-gold-400' : 'text-slate-600'} hidden sm:block`}>{s}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Form content */}
+        <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass rounded-2xl p-6 mb-6">
+          {currentStep === 0 && (
+            <div>
+              <h3 className="text-white font-semibold mb-5">Personal Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { key: 'firstName', label: 'First Name', placeholder: 'John' },
+                  { key: 'lastName', label: 'Last Name', placeholder: 'Smith' },
+                  { key: 'email', label: 'Email Address', placeholder: 'john@email.com' },
+                  { key: 'phone', label: 'Phone Number', placeholder: '+1 234 567 890' },
+                  { key: 'dob', label: 'Date of Birth', placeholder: 'YYYY-MM-DD' },
+                  { key: 'nationality', label: 'Nationality', placeholder: 'Indian' },
+                  { key: 'passport', label: 'Passport Number', placeholder: 'A1234567' },
+                  { key: 'passportExpiry', label: 'Passport Expiry', placeholder: 'YYYY-MM-DD' },
+                ].map(f => (
+                  <div key={f.key} className={f.key === 'address' ? 'col-span-2' : ''}>
+                    <label className="label">{f.label}</label>
+                    <input className="input-glass" placeholder={f.placeholder} value={form[f.key]} onChange={e => setForm({...form, [f.key]: e.target.value})} />
+                  </div>
+                ))}
+                <div className="col-span-2">
+                  <label className="label">Current Address</label>
+                  <textarea className="input-glass" rows="2" placeholder="Street, City, Country" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 1 && (
+            <div>
+              <h3 className="text-white font-semibold mb-5">Educational Background</h3>
+              <div className="space-y-4">
+                {[
+                  { key: 'education', label: 'Highest Education Level', placeholder: 'Bachelor\'s Degree' },
+                  { key: 'university', label: 'Institution Name', placeholder: 'University of Mumbai' },
+                  { key: 'degree', label: 'Field of Study', placeholder: 'Computer Science' },
+                  { key: 'gradYear', label: 'Graduation Year', placeholder: '2019' },
+                ].map(f => (
+                  <div key={f.key}>
+                    <label className="label">{f.label}</label>
+                    <input className="input-glass" placeholder={f.placeholder} value={form[f.key]} onChange={e => setForm({...form, [f.key]: e.target.value})} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div>
+              <h3 className="text-white font-semibold mb-5">Work Experience</h3>
+              <div className="space-y-4">
+                {[
+                  { key: 'employer', label: 'Current / Last Employer', placeholder: 'Tech Company Ltd.' },
+                  { key: 'jobTitle', label: 'Job Title / Position', placeholder: 'Software Engineer' },
+                  { key: 'experience', label: 'Years of Experience', placeholder: '5 years' },
+                  { key: 'salary', label: 'Current Annual Salary', placeholder: '$60,000 USD' },
+                ].map(f => (
+                  <div key={f.key}>
+                    <label className="label">{f.label}</label>
+                    <input className="input-glass" placeholder={f.placeholder} value={form[f.key]} onChange={e => setForm({...form, [f.key]: e.target.value})} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div>
+              <h3 className="text-white font-semibold mb-5">Travel History</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="label">Countries Visited (Last 5 Years)</label>
+                  <textarea className="input-glass" rows="3" placeholder="USA (2023), UK (2022), UAE (2021)..." value={form.previousVisa} onChange={e => setForm({...form, previousVisa: e.target.value})} />
+                </div>
+                <div>
+                  <label className="label">Previous Visa Refusals</label>
+                  <select className="input-glass" value={form.refusals} onChange={e => setForm({...form, refusals: e.target.value})}>
+                    <option value="">Select...</option>
+                    <option value="none">None</option>
+                    <option value="yes">Yes (will explain below)</option>
+                  </select>
+                </div>
+                {form.refusals === 'yes' && (
+                  <div>
+                    <label className="label">Refusal Details</label>
+                    <textarea className="input-glass" rows="3" placeholder="Please provide details about the refusal..." />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div>
+              <h3 className="text-white font-semibold mb-5">Document Upload</h3>
+              <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-gold-500/30 transition-colors mb-4">
+                <Upload size={32} className="text-slate-500 mx-auto mb-3" />
+                <p className="text-white font-medium mb-1">Upload Required Documents</p>
+                <p className="text-slate-400 text-sm mb-4">Passport, Educational Certificates, Work Letters, Bank Statements</p>
+                <label className="btn-primary cursor-pointer inline-block text-sm py-2 px-6">
+                  Browse Files
+                  <input type="file" multiple className="hidden" />
+                </label>
+              </div>
+              <div className="space-y-2">
+                {['Passport Copy ✓', 'Degree Certificate ✓', 'Work Experience Letter'].map((doc, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 glass rounded-lg">
+                    <CheckCircle size={15} className={i < 2 ? 'text-teal-400' : 'text-slate-600'} />
+                    <span className={`text-sm ${i < 2 ? 'text-white' : 'text-slate-500'}`}>{doc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 5 && (
+            <div>
+              <h3 className="text-white font-semibold mb-5">Review & Submit</h3>
+              <div className="space-y-4">
+                {[
+                  { title: 'Personal Info', items: [`${form.firstName} ${form.lastName}`, form.email, form.nationality] },
+                  { title: 'Education', items: [form.education, form.university, form.degree] },
+                  { title: 'Work Experience', items: [form.employer, form.jobTitle, form.experience] },
+                ].map(section => (
+                  <div key={section.title} className="glass rounded-xl p-4">
+                    <h4 className="text-gold-400 text-sm font-semibold mb-2">{section.title}</h4>
+                    {section.items.filter(Boolean).map((item, i) => (
+                      <p key={i} className="text-slate-300 text-sm">{item}</p>
+                    ))}
+                  </div>
+                ))}
+                <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                  <p className="text-slate-300 text-sm">By submitting this application, you confirm that all information provided is accurate and complete. False information may result in visa refusal and future bans.</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Navigation */}
+        <div className="flex justify-between">
+          <button onClick={handleBack} disabled={currentStep === 0} className="btn-outline disabled:opacity-40 disabled:cursor-not-allowed">
+            Back
+          </button>
+          {currentStep < steps.length - 1 ? (
+            <button onClick={handleNext} className="btn-primary flex items-center gap-2">
+              Continue <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button onClick={handleSubmit} disabled={submitting} className="btn-primary flex items-center gap-2">
+              {submitting ? 'Submitting...' : 'Submit Application'} <CheckCircle size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════
+// BLOG PAGE
+// ═══════════════════════════════════════
+const posts = [
+  { id: 1, title: 'Canada Express Entry 2025: What\'s Changed and How to Maximize Your CRS Score', category: 'Immigration News', date: 'Jan 15, 2025', readTime: '8 min', color: 'from-gold-500/20 to-orange-500/10', excerpt: 'The Canadian government has introduced significant changes to the Express Entry system in 2025. Here\'s everything you need to know about the new draws, tie-breaking rules, and how to boost your Comprehensive Ranking System score.' },
+  { id: 2, title: 'Germany\'s New Opportunity Card: A Game Changer for Skilled Workers', category: 'Visa Guide', date: 'Jan 12, 2025', readTime: '6 min', color: 'from-teal-500/20 to-cyan-500/10', excerpt: 'Germany\'s new points-based pre-immigration visa allows skilled professionals to arrive and search for jobs. We break down the requirements, points system, and who qualifies for this revolutionary visa.' },
+  { id: 3, title: 'Top 10 In-Demand Jobs in Australia 2025 with Visa Sponsorship', category: 'Job Market', date: 'Jan 10, 2025', readTime: '5 min', color: 'from-indigo-500/20 to-purple-500/10', excerpt: 'Australia\'s skills shortage list has been updated for 2025. Discover which occupations are in highest demand, typical salaries, and how to secure employer sponsorship for your Australian dream.' },
+  { id: 4, title: 'UK Post-Study Work Visa: Everything International Students Need to Know', category: 'Study Abroad', date: 'Jan 8, 2025', readTime: '7 min', color: 'from-blue-500/20 to-indigo-500/10', excerpt: 'The UK Graduate Route visa allows international students to stay and work after completing their degree. Learn about eligibility, application process, and how to transition to a Skilled Worker visa.' },
+  { id: 5, title: 'IELTS vs PTE vs CELPIP: Which English Test is Best for Immigration?', category: 'Visa Guide', date: 'Jan 5, 2025', readTime: '10 min', color: 'from-rose-500/20 to-pink-500/10', excerpt: 'Choosing the right English proficiency test can impact your immigration points. We compare IELTS, PTE Academic, CELPIP, and TOEFL for Canada, Australia, UK, and other popular destinations.' },
+  { id: 6, title: 'USA H-1B Visa Lottery 2025: Registration Guide and Odds Calculator', category: 'Immigration News', date: 'Jan 2, 2025', readTime: '9 min', color: 'from-red-500/20 to-orange-500/10', excerpt: 'The H-1B lottery season is approaching. Learn about the registration process, selection odds, and strategies to improve your chances of selection in the annual H-1B cap lottery.' },
+]
+
+const categories = ['All', 'Immigration News', 'Visa Guide', 'Job Market', 'Study Abroad']
+
+export function BlogPage() {
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('All')
+
+  const filtered = posts.filter(p => {
+    const matchSearch = !search || p.title.toLowerCase().includes(search.toLowerCase())
+    const matchCat = category === 'All' || p.category === category
+    return matchSearch && matchCat
+  })
+
+  return (
+    <div className="min-h-screen bg-navy-950 pt-20 pb-16">
+      {/* Hero */}
+      <section className="hero-bg py-16 relative overflow-hidden">
+        <div className="dot-pattern absolute inset-0 opacity-20" />
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+          <div className="badge badge-teal mx-auto mb-4">Immigration Blog</div>
+          <h1 className="font-display text-5xl font-bold text-white mb-4">
+            Immigration <span className="gradient-text">Insights & Guides</span>
+          </h1>
+          <p className="text-slate-400 mb-8">Stay updated with the latest immigration news, visa guides, and expert advice.</p>
+          <div className="relative max-w-md mx-auto">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input className="input-glass pl-11 py-3 rounded-xl" placeholder="Search articles..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Category filters */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {categories.map(c => (
+            <button key={c} onClick={() => setCategory(c)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${category === c ? 'bg-gold-500 text-navy-950' : 'glass text-slate-400 hover:text-white'}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((post, i) => (
+            <motion.div key={post.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+              whileHover={{ y: -5 }} className="glass rounded-2xl overflow-hidden cursor-pointer group">
+              <div className={`h-44 bg-gradient-to-br ${post.color} relative overflow-hidden`}>
+                <div className="dot-pattern absolute inset-0" />
+                <div className="absolute bottom-3 left-3">
+                  <span className="badge badge-gold text-xs">{post.category}</span>
+                </div>
+              </div>
+              <div className="p-5">
+                <h3 className="text-white font-semibold mb-2 leading-snug group-hover:text-gold-400 transition-colors line-clamp-2">{post.title}</h3>
+                <p className="text-slate-500 text-xs leading-relaxed mb-3 line-clamp-2">{post.excerpt}</p>
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1"><Calendar size={11} /> {post.date}</span>
+                    <span className="flex items-center gap-1"><Clock size={11} /> {post.readTime}</span>
+                  </div>
+                  <span className="text-gold-400 font-medium group-hover:gap-2 flex items-center gap-1 transition-all">
+                    Read <ArrowRight size={12} />
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════
+// CONTACT PAGE
+// ═══════════════════════════════════════
+export function ContactPage() {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' })
+  const [loading, setLoading] = useState(false)
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    await new Promise(r => setTimeout(r, 1200))
+    setLoading(false)
+    setSent(true)
+    toast.success('Message sent! We\'ll reply within 2 hours.')
+    setForm({ name: '', email: '', phone: '', subject: '', message: '' })
+  }
+
+  return (
+    <div className="min-h-screen bg-navy-950 pt-20 pb-16">
+      {/* Hero */}
+      <section className="hero-bg py-16 relative overflow-hidden">
+        <div className="dot-pattern absolute inset-0 opacity-20" />
+        <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
+          <div className="badge badge-gold mx-auto mb-4">Contact Us</div>
+          <h1 className="font-display text-5xl font-bold text-white mb-4">
+            Get in <span className="gradient-text">Touch</span>
+          </h1>
+          <p className="text-slate-400">Our immigration experts are ready to help you navigate your journey. Reach out through any channel.</p>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid lg:grid-cols-3 gap-10">
+          {/* Contact Info */}
+          <div className="space-y-5">
+            <h2 className="font-display text-2xl font-bold text-white mb-6">Contact Information</h2>
+            {[
+              { icon: Phone, title: 'Phone', value: '+1 (800) 555-VISA', sub: 'Mon-Fri 9AM-6PM EST', link: 'tel:+18005558472' },
+              { icon: Mail, title: 'Email', value: 'info@globalvisapro.com', sub: 'Response within 2 hours', link: 'mailto:info@globalvisapro.com' },
+              { icon: MessageCircle, title: 'WhatsApp', value: '+1 800 555 8472', sub: 'Available 24/7', link: 'https://wa.me/18005558472' },
+              { icon: MapPin, title: 'Main Office', value: '123 Immigration Tower, Toronto', sub: 'Ontario, Canada M5H 2N2', link: '#' },
+            ].map(c => (
+              <a key={c.title} href={c.link} target={c.link.startsWith('http') ? '_blank' : '_self'} rel="noopener noreferrer"
+                className="flex gap-4 p-4 glass rounded-xl hover:border-gold-500/20 border border-transparent transition-colors group">
+                <div className="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-gold-500/20 transition-colors">
+                  <c.icon size={18} className="text-gold-400" />
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-0.5">{c.title}</div>
+                  <div className="text-white font-medium text-sm">{c.value}</div>
+                  <div className="text-xs text-slate-500">{c.sub}</div>
+                </div>
+              </a>
+            ))}
+
+            {/* Map placeholder */}
+            <div className="glass rounded-xl overflow-hidden h-48 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-navy-800 to-navy-900 flex items-center justify-center">
+                <div className="text-center">
+                  <MapPin size={32} className="text-gold-400 mx-auto mb-2" />
+                  <p className="text-slate-400 text-sm">Toronto, Canada</p>
+                  <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer"
+                    className="text-gold-400 text-xs hover:underline mt-1 block">View on Google Maps →</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="lg:col-span-2">
+            <div className="glass rounded-2xl p-8">
+              <h2 className="font-display text-2xl font-bold text-white mb-6">Send us a Message</h2>
+              {sent ? (
+                <div className="text-center py-12">
+                  <CheckCircle size={48} className="text-teal-400 mx-auto mb-4" />
+                  <h3 className="text-white text-xl font-semibold mb-2">Message Sent!</h3>
+                  <p className="text-slate-400 mb-6">Thank you for reaching out. We'll respond within 2 hours.</p>
+                  <button onClick={() => setSent(false)} className="btn-outline">Send Another</button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="label">Full Name</label>
+                      <input className="input-glass" placeholder="John Smith" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+                    </div>
+                    <div>
+                      <label className="label">Phone Number</label>
+                      <input className="input-glass" placeholder="+1 234 567 890" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="label">Email Address</label>
+                    <input className="input-glass" type="email" placeholder="john@email.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
+                  </div>
+                  <div>
+                    <label className="label">Subject</label>
+                    <select className="input-glass" value={form.subject} onChange={e => setForm({...form, subject: e.target.value})} required>
+                      <option value="">Select a subject...</option>
+                      {['Work Permit Inquiry', 'Study Visa', 'Permanent Residency', 'Job Assistance', 'Application Status', 'General Inquiry'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Message</label>
+                    <textarea className="input-glass" rows="6" placeholder="Tell us about your immigration goals, your current situation, and any specific questions you have..." value={form.message} onChange={e => setForm({...form, message: e.target.value})} required />
+                  </div>
+                  <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
+                    {loading ? 'Sending...' : <><Mail size={16} /> Send Message</>}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* WhatsApp button */}
+      <a href="https://wa.me/18005558472" target="_blank" rel="noopener noreferrer" className="whatsapp-btn">
+        <MessageCircle size={28} fill="white" className="text-white" />
+      </a>
+    </div>
+  )
+}
