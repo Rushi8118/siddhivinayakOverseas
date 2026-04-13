@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { getApplications, getProfile, updateProfile } from '../lib/supabaseClient'
 import {
   User, FileText, Upload, Bell, CheckCircle, Clock, XCircle,
   Globe, TrendingUp, AlertCircle, ChevronRight, Plus, Download
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-
-const mockApplications = [
-  { id: 1, type: 'Express Entry', country: '🇨🇦 Canada', status: 'In Review', date: '2025-01-10', progress: 65, color: 'text-gold-400' },
-  { id: 2, type: 'Study Visa', country: '🇦🇺 Australia', status: 'Approved', date: '2024-12-20', progress: 100, color: 'text-teal-400' },
-  { id: 3, type: 'Work Permit', country: '🇩🇪 Germany', status: 'Documents Required', date: '2025-01-05', progress: 35, color: 'text-red-400' },
-]
 
 const mockDocuments = [
   { name: 'Passport Copy.pdf', size: '2.4 MB', date: '2025-01-08', status: 'Verified' },
@@ -27,14 +22,16 @@ const savedPrograms = [
 ]
 
 const statusIcon = (status) => {
-  if (status === 'Approved') return <CheckCircle size={14} className="text-teal-400" />
-  if (status === 'In Review') return <Clock size={14} className="text-gold-400" />
+  const s = status?.toLowerCase()
+  if (s === 'approved') return <CheckCircle size={14} className="text-teal-400" />
+  if (s === 'pending' || s === 'in_review') return <Clock size={14} className="text-gold-400" />
   return <AlertCircle size={14} className="text-red-400" />
 }
 
 const statusBadge = (status) => {
-  if (status === 'Approved') return 'badge badge-teal text-xs'
-  if (status === 'In Review') return 'badge badge-gold text-xs'
+  const s = status?.toLowerCase()
+  if (s === 'approved') return 'badge badge-teal text-xs'
+  if (s === 'pending' || s === 'in_review') return 'badge badge-gold text-xs'
   return 'badge text-xs bg-red-500/10 text-red-400 border border-red-500/20'
 }
 
@@ -42,6 +39,71 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
   const [uploading, setUploading] = useState(false)
+  const [applications, setApplications] = useState([])
+  const [loadingApps, setLoadingApps] = useState(true)
+  const [profileData, setProfileData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    nationality: '',
+    currentCountry: '',
+    desiredCountry: ''
+  })
+
+  useEffect(() => {
+    if (user) {
+      fetchApplications()
+      fetchProfile()
+    }
+  }, [user])
+
+  const fetchApplications = async () => {
+    try {
+      const { data, error } = await getApplications(user.id)
+      if (error) throw error
+      setApplications(data || [])
+    } catch (error) {
+      console.error('Error fetching applications:', error)
+    } finally {
+      setLoadingApps(false)
+    }
+  }
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await getProfile(user.id)
+      if (error) throw error
+      if (data) {
+        setProfileData({
+          fullName: data.full_name || user.user_metadata?.full_name || '',
+          email: user.email || '',
+          phone: data.phone || '',
+          nationality: data.nationality || '',
+          currentCountry: data.current_country || '',
+          desiredCountry: data.desired_country || ''
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+    }
+  }
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault()
+    try {
+      const { error } = await updateProfile(user.id, {
+        full_name: profileData.fullName,
+        phone: profileData.phone,
+        nationality: profileData.nationality,
+        current_country: profileData.currentCountry,
+        desired_country: profileData.desiredCountry
+      })
+      if (error) throw error
+      toast.success('Profile updated successfully!')
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: TrendingUp },
@@ -125,19 +187,22 @@ export default function DashboardPage() {
                   <FileText size={16} className="text-gold-400" /> Recent Applications
                 </h3>
                 <div className="space-y-3">
-                  {mockApplications.map(app => (
-                    <div key={app.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors">
-                      <div className="text-2xl">{app.country.split(' ')[0]}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white">{app.type}</div>
-                        <div className="text-xs text-slate-400">{app.country}</div>
-                        <div className="progress-bar mt-2">
-                          <div className="progress-fill" style={{ width: `${app.progress}%` }} />
+                  {loadingApps ? (
+                    <div className="text-slate-500 text-sm">Loading applications...</div>
+                  ) : applications.length === 0 ? (
+                    <div className="text-slate-500 text-sm">No applications found.</div>
+                  ) : (
+                    applications.slice(0, 3).map(app => (
+                      <div key={app.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors">
+                        <div className="text-2xl">{app.country === 'Canada' ? '🇨🇦' : app.country === 'Australia' ? '🇦🇺' : app.country === 'Germany' ? '🇩🇪' : '🌍'}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white">{app.service.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</div>
+                          <div className="text-xs text-slate-400">{app.country}</div>
                         </div>
+                        <span className={statusBadge(app.status)}>{app.status}</span>
                       </div>
-                      <span className={statusBadge(app.status)}>{app.status}</span>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -170,9 +235,9 @@ export default function DashboardPage() {
             <div className="glass rounded-2xl overflow-hidden">
               <div className="p-6 flex items-center justify-between border-b border-white/5">
                 <h3 className="text-white font-semibold">All Applications</h3>
-                <button className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5">
+                <Link to="/apply" className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5">
                   <Plus size={14} /> New Application
-                </button>
+                </Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full glass-table">
@@ -187,27 +252,33 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockApplications.map(app => (
-                      <tr key={app.id}>
-                        <td className="text-white font-medium">{app.type}</td>
-                        <td>{app.country}</td>
-                        <td><span className={statusBadge(app.status)}>{statusIcon(app.status)} {app.status}</span></td>
-                        <td>
-                          <div className="flex items-center gap-2 min-w-32">
-                            <div className="progress-bar flex-1">
-                              <div className="progress-fill" style={{ width: `${app.progress}%` }} />
+                    {loadingApps ? (
+                      <tr><td colSpan="6" className="text-center py-4 text-slate-500">Loading applications...</td></tr>
+                    ) : applications.length === 0 ? (
+                      <tr><td colSpan="6" className="text-center py-4 text-slate-500">No applications found.</td></tr>
+                    ) : (
+                      applications.map(app => (
+                        <tr key={app.id}>
+                          <td className="text-white font-medium">{app.service.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</td>
+                          <td>{app.country}</td>
+                          <td><span className={statusBadge(app.status)}>{statusIcon(app.status)} {app.status}</span></td>
+                          <td>
+                            <div className="flex items-center gap-2 min-w-32">
+                              <div className="progress-bar flex-1">
+                                <div className="progress-fill" style={{ width: app.status === 'approved' ? '100%' : app.status === 'rejected' ? '100%' : '50%' }} />
+                              </div>
+                              <span className="text-xs text-slate-400">{app.status === 'approved' ? '100%' : app.status === 'rejected' ? '100%' : '50%'}</span>
                             </div>
-                            <span className="text-xs text-slate-400">{app.progress}%</span>
-                          </div>
-                        </td>
-                        <td className="text-slate-400">{app.date}</td>
-                        <td>
-                          <button className="text-gold-400 hover:text-gold-300 text-sm flex items-center gap-1">
-                            View <ChevronRight size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="text-slate-400">{new Date(app.created_at).toLocaleDateString()}</td>
+                          <td>
+                            <button className="text-gold-400 hover:text-gold-300 text-sm flex items-center gap-1">
+                              View <ChevronRight size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -288,22 +359,29 @@ export default function DashboardPage() {
             <div className="max-w-2xl">
               <div className="glass rounded-2xl p-6">
                 <h3 className="text-white font-semibold mb-6">Profile Information</h3>
-                <div className="space-y-4">
+                <form onSubmit={handleProfileUpdate} className="space-y-4">
                   {[
-                    { label: 'Full Name', value: user?.user_metadata?.full_name || '', placeholder: 'John Smith' },
-                    { label: 'Email', value: user?.email || '', placeholder: 'john@email.com', disabled: true },
-                    { label: 'Phone', value: '', placeholder: '+1 234 567 890' },
-                    { label: 'Nationality', value: '', placeholder: 'Indian' },
-                    { label: 'Current Country', value: '', placeholder: 'United Arab Emirates' },
-                    { label: 'Desired Country', value: '', placeholder: 'Canada' },
+                    { label: 'Full Name', value: profileData.fullName, name: 'fullName', placeholder: 'John Smith' },
+                    { label: 'Email Address', value: profileData.email, name: 'email', placeholder: 'john@email.com', disabled: true },
+                    { label: 'Phone Number', value: profileData.phone, name: 'phone', placeholder: '+1 234 567 890' },
+                    { label: 'Nationality', value: profileData.nationality, name: 'nationality', placeholder: 'Indian' },
+                    { label: 'Current Country', value: profileData.currentCountry, name: 'currentCountry', placeholder: 'United Arab Emirates' },
+                    { label: 'Desired Country', value: profileData.desiredCountry, name: 'desiredCountry', placeholder: 'Canada' },
                   ].map(field => (
                     <div key={field.label}>
                       <label className="label">{field.label}</label>
-                      <input className="input-glass" defaultValue={field.value} placeholder={field.placeholder} disabled={field.disabled} />
+                      <input 
+                        className="input-glass" 
+                        value={field.value} 
+                        name={field.name}
+                        onChange={(e) => setProfileData({ ...profileData, [field.name]: e.target.value })}
+                        placeholder={field.placeholder} 
+                        disabled={field.disabled} 
+                      />
                     </div>
                   ))}
-                  <button className="btn-primary mt-2">Save Changes</button>
-                </div>
+                  <button type="submit" className="btn-primary mt-2">Save Changes</button>
+                </form>
               </div>
             </div>
           )}

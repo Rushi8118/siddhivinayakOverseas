@@ -41,10 +41,37 @@ export const resetPassword = async (email) => {
   return { data, error }
 }
 
+export const updatePassword = async (newPassword) => {
+  if (!supabase) return { data: null, error: { message: 'Supabase not configured' } }
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword
+  })
+  return { data, error }
+}
+
 export const getCurrentUser = async () => {
   if (!supabase) return null
   const { data: { user } } = await supabase.auth.getUser()
   return user
+}
+
+export const getProfile = async (userId) => {
+  if (!supabase) return { data: null, error: { message: 'Supabase not configured' } }
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+  return { data, error }
+}
+
+export const updateProfile = async (userId, profile) => {
+  if (!supabase) return { data: null, error: { message: 'Supabase not configured' } }
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .update(profile)
+    .eq('id', userId)
+  return { data, error }
 }
 
 export const getApplications = async (userId) => {

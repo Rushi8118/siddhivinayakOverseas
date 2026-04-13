@@ -121,6 +121,7 @@ CREATE TABLE user_profiles (
   date_of_birth DATE,
   nationality TEXT,
   current_country TEXT,
+     desired_country TEXT,
   address JSONB,
   emergency_contact JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

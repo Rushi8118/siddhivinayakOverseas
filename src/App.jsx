@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import WorkPermitPage from './pages/WorkPermitPage'
 import StudyVisaPage from './pages/StudyVisaPage'
@@ -32,7 +33,7 @@ const PageWrapper = ({ children }) => (
 
 function AppContent() {
   const location = useLocation()
-  const noLayoutPages = ['/login', '/signup', '/forgot-password']
+  const noLayoutPages = ['/login', '/signup', '/forgot-password', '/reset-password']
   const showLayout = !noLayoutPages.includes(location.pathname)
 
   return (
@@ -46,6 +47,7 @@ function AppContent() {
             <Route path="/login" element={<PageWrapper><LoginPage /></PageWrapper>} />
             <Route path="/signup" element={<PageWrapper><SignupPage /></PageWrapper>} />
             <Route path="/forgot-password" element={<PageWrapper><ForgotPasswordPage /></PageWrapper>} />
+            <Route path="/reset-password" element={<PageWrapper><ResetPasswordPage /></PageWrapper>} />
             <Route path="/dashboard" element={<PageWrapper><DashboardPage /></PageWrapper>} />
             <Route path="/services/work-permit" element={<PageWrapper><WorkPermitPage /></PageWrapper>} />
             <Route path="/services/study-visa" element={<PageWrapper><StudyVisaPage /></PageWrapper>} />

@@ -2,8 +2,11 @@ import { motion } from 'framer-motion'
 import { FileText, Upload, Clock, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
+import { createApplication } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
 
 export default function ApplicationPage() {
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -21,12 +24,34 @@ export default function ApplicationPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    if (!user) {
+      toast.error('Please log in to submit an application')
+      return
+    }
+
     setLoading(true)
     try {
+      const applicationData = {
+        user_id: user.id,
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        service: formData.service,
+        country: formData.country,
+        message: formData.message,
+        status: 'pending'
+      }
+
+      const { data, error } = await createApplication(applicationData)
+
+      if (error) throw error
+
       toast.success('Application submitted successfully!')
       setFormData({ fullName: '', email: '', phone: '', service: '', country: '', message: '' })
     } catch (error) {
-      toast.error('Failed to submit application')
+      console.error('Submission error:', error)
+      toast.error(error.message || 'Failed to submit application')
     } finally {
       setLoading(false)
     }
