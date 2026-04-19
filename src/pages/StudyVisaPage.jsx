@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { GraduationCap, FileText, Clock, CheckCircle, Users, Award } from 'lucide-react'
+import SEO from '../components/SEO'
 
 function ProcessStep({ step, title, desc }) {
   return (
@@ -27,6 +28,11 @@ function ProcessStep({ step, title, desc }) {
 export default function StudyVisaPage() {
   return (
     <div className="bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950">
+      <SEO 
+        title="Study Visa Services" 
+        description="Pursue quality education in top universities worldwide. Expert guidance for student visas in Canada, Australia, UK, and USA. From university selection to visa approval."
+        keywords="study visa, student visa, Canada study permit, Australia student visa, UK student visa, USA F1 visa, study abroad, international students"
+      />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4">
         <motion.div

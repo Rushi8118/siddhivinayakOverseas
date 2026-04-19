@@ -76,9 +76,9 @@ function ConsultationForm({ serviceType }) {
         </div>
         <div>
           <label className="label">Preferred Country</label>
-          <select className="input-glass" value={form.country} onChange={e => setForm({...form, country: e.target.value})} required>
-            <option value="">Select country...</option>
-            {['Canada', 'Australia', 'Germany', 'UK', 'USA', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
+          <select className="input-glass text-white bg-navy-900" value={form.country} onChange={e => setForm({...form, country: e.target.value})} required>
+            <option value="" className="text-slate-400 bg-navy-900">Select country...</option>
+            {['Canada', 'Australia', 'Germany', 'UK', 'USA', 'Other'].map(c => <option key={c} value={c} className="text-white bg-navy-900">{c}</option>)}
           </select>
         </div>
         <div>

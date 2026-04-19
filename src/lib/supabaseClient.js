@@ -1,15 +1,48 @@
 import { createClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
 
 
 let supabase = null
+
+// Helper to validate JWT format (header.payload.signature)
+const isJWT = (str) => typeof str === 'string' && str.split('.').length === 3
+
 if (typeof url === 'string' && /^https?:\/\//.test(url) && typeof key === 'string' && key) {
-  supabase = createClient(url, key)
+  if (!isJWT(key)) {
+    console.error('CRITICAL: Supabase Key is not a valid JWT. Database operations will fail. Ensure VITE_SUPABASE_ANON_KEY starts with "eyJ..."')
+  }
+  
+  // Use sessionStorage so the session is cleared when the browser/tab is closed
+  supabase = createClient(url, key, {
+    auth: {
+      storage: window.sessionStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  })
+} else {
+  console.error('CRITICAL: Supabase URL or Key is missing from environment variables.')
 }
 
 export { supabase }
+
+const CONFIG_ERROR = { 
+  data: null, 
+  error: { 
+    message: 'Supabase not configured correctly. Check if VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (JWT format) are set in your .env file.' 
+  } 
+}
+
+export const resendConfirmationEmail = async (email) => {
+  if (!supabase) return CONFIG_ERROR
+  const { data, error } = await supabase.auth.resend({
+    type: 'signup',
+    email: email
+  })
+  return { data, error }
+}
 
 export const signUp = async (email, password, fullName) => {
   if (!supabase) return { data: null, error: { message: 'Supabase not configured' } }
@@ -105,8 +138,8 @@ export const uploadDocument = async (userId, file, folder = 'documents') => {
 export const getDocuments = async (userId) => {
   if (!supabase) return { data: [], error: null }
   const { data, error } = await supabase.storage
-    .from('user-documents')
-    .list(userId)
+      .from('user-documents')
+    .list(`${userId}/documents`)
   return { data, error }
 }
 
@@ -125,15 +158,5 @@ export const getVisaPrograms = async (filters = {}) => {
   if (filters.country) query = query.eq('country', filters.country)
   if (filters.visa_type) query = query.eq('visa_type', filters.visa_type)
   const { data, error } = await query
-  return { data, error }
-}
-
-export const getBlogPosts = async (limit = 6) => {
-  if (!supabase) return { data: [], error: null }
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit)
   return { data, error }
 }

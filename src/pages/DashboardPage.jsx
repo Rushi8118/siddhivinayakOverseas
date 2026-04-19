@@ -1,25 +1,13 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getApplications, getProfile, updateProfile } from '../lib/supabaseClient'
+import { getApplications, getProfile, updateProfile, getDocuments, uploadDocument, getVisaPrograms, supabase } from '../lib/supabaseClient'
 import {
   User, FileText, Upload, Bell, CheckCircle, Clock, XCircle,
   Globe, TrendingUp, AlertCircle, ChevronRight, Plus, Download
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-
-const mockDocuments = [
-  { name: 'Passport Copy.pdf', size: '2.4 MB', date: '2025-01-08', status: 'Verified' },
-  { name: 'Education Certificate.pdf', size: '1.8 MB', date: '2025-01-07', status: 'Pending' },
-  { name: 'Work Experience Letter.pdf', size: '0.9 MB', date: '2025-01-06', status: 'Verified' },
-  { name: 'Bank Statement.pdf', size: '3.2 MB', date: '2025-01-05', status: 'Pending' },
-]
-
-const savedPrograms = [
-  { name: 'Canada Express Entry', type: 'PR', points: 470, deadline: 'No Deadline', flag: '🇨🇦' },
-  { name: 'Australia Skilled Migration', type: 'Skilled', points: 65, deadline: 'Rolling', flag: '🇦🇺' },
-  { name: 'Germany EU Blue Card', type: 'Work', points: 'N/A', deadline: '30 days', flag: '🇩🇪' },
-]
 
 const statusIcon = (status) => {
   const s = status?.toLowerCase()
@@ -36,15 +24,23 @@ const statusBadge = (status) => {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [uploading, setUploading] = useState(false)
   const [applications, setApplications] = useState([])
   const [loadingApps, setLoadingApps] = useState(true)
+  const [documents, setDocuments] = useState([])
+  const [loadingDocs, setLoadingDocs] = useState(true)
+  const [programs, setPrograms] = useState([])
+  const [loadingPrograms, setLoadingPrograms] = useState(true)
+  const [notifications, setNotifications] = useState([])
+  const [selectedApplication, setSelectedApplication] = useState(null)
   const [profileData, setProfileData] = useState({
     fullName: '',
     email: '',
     phone: '',
+    whatsapp: '',
     nationality: '',
     currentCountry: '',
     desiredCountry: ''
@@ -54,8 +50,82 @@ export default function DashboardPage() {
     if (user) {
       fetchApplications()
       fetchProfile()
+      fetchDocuments()
+      fetchPrograms()
     }
-  }, [user])
+    if (!loading && !user) {
+      navigate('/login')
+    }
+  }, [user, loading, navigate])
+
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await getDocuments(user.id)
+      if (error) throw error
+      const docs = (data || [])
+        .filter(d => d.name !== '.emptyFolderPlaceholder')
+        .map(d => ({
+          name: d.name.replace(/^\d+_/, ''), // Remove timestamp prefix if any
+          rawName: d.name,
+          size: d.metadata?.size ? (d.metadata.size / (1024 * 1024)).toFixed(2) + ' MB' : 'Unknown',
+          date: new Date(d.created_at).toLocaleDateString(),
+          status: 'Uploaded',
+          path: `${user.id}/documents/${d.name}`
+        }))
+      setDocuments(docs)
+    } catch (error) {
+      console.error('Error fetching docs:', error)
+    } finally {
+      setLoadingDocs(false)
+    }
+  }
+
+  const fetchPrograms = async () => {
+    try {
+      const { data, error } = await getVisaPrograms()
+      if (error) throw error
+      setPrograms(data || [])
+    } catch (error) {
+      console.error('Error fetching programs:', error)
+    } finally {
+      setLoadingPrograms(false)
+    }
+  }
+
+  const profileFields = ['fullName', 'email', 'phone', 'nationality', 'currentCountry', 'desiredCountry']
+  const filledFields = profileFields.filter(f => profileData[f] && profileData[f].trim() !== '').length
+  const profileCompleteness = Math.round((filledFields / profileFields.length) * 100)
+  const activeApplicationsCount = applications.filter((app) => ['pending', 'in_review'].includes(app.status)).length
+
+  // Generate dynamic notifications
+  useEffect(() => {
+    const newNotifications = []
+    if (applications.length > 0) {
+      const latestApp = applications[0]
+      newNotifications.push({
+        msg: `Your ${latestApp.country} ${latestApp.service.split('-').join(' ')} application is ${latestApp.status}`,
+        time: new Date(latestApp.updated_at || latestApp.created_at).toLocaleDateString(),
+        color: latestApp.status === 'approved' ? 'text-teal-400' : latestApp.status === 'rejected' ? 'text-red-400' : 'text-gold-400'
+      })
+    }
+    if (documents.length > 0) {
+      newNotifications.push({
+        msg: `Successfully uploaded ${documents[0].name}`,
+        time: documents[0].date,
+        color: 'text-teal-400'
+      })
+    }
+    
+    if (profileCompleteness < 100) {
+      newNotifications.push({
+        msg: `Profile completeness is ${profileCompleteness}%. Update your profile.`,
+        time: 'Just now',
+        color: 'text-slate-400'
+      })
+    }
+    
+    setNotifications(newNotifications)
+  }, [applications, documents, profileCompleteness])
 
   const fetchApplications = async () => {
     try {
@@ -78,6 +148,7 @@ export default function DashboardPage() {
           fullName: data.full_name || user.user_metadata?.full_name || '',
           email: user.email || '',
           phone: data.phone || '',
+          whatsapp: data.whatsapp_number || '',
           nationality: data.nationality || '',
           currentCountry: data.current_country || '',
           desiredCountry: data.desired_country || ''
@@ -94,6 +165,7 @@ export default function DashboardPage() {
       const { error } = await updateProfile(user.id, {
         full_name: profileData.fullName,
         phone: profileData.phone,
+        whatsapp_number: profileData.whatsapp,
         nationality: profileData.nationality,
         current_country: profileData.currentCountry,
         desired_country: profileData.desiredCountry
@@ -109,7 +181,7 @@ export default function DashboardPage() {
     { id: 'overview', label: 'Overview', icon: TrendingUp },
     { id: 'applications', label: 'Applications', icon: FileText },
     { id: 'documents', label: 'Documents', icon: Upload },
-    { id: 'saved', label: 'Saved Programs', icon: Globe },
+    { id: 'saved', label: 'Available Programs', icon: Globe },
     { id: 'profile', label: 'Profile', icon: User },
   ]
 
@@ -117,9 +189,26 @@ export default function DashboardPage() {
     const file = e.target.files[0]
     if (!file) return
     setUploading(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setUploading(false)
-    toast.success(`${file.name} uploaded successfully!`)
+    try {
+      const { error } = await uploadDocument(user.id, file)
+      if (error) throw error
+      toast.success(`${file.name} uploaded successfully!`)
+      fetchDocuments() // refresh list
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast.error('Failed to upload document')
+    } finally {
+      setUploading(false)
+      e.target.value = '' // reset input
+    }
+  }
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-navy-950 flex items-center justify-center">
+        <div className="text-slate-400">{loading ? 'Loading dashboard...' : 'Redirecting to login...'}</div>
+      </div>
+    )
   }
 
   return (
@@ -145,10 +234,10 @@ export default function DashboardPage() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Active Applications', value: '3', icon: FileText, color: 'from-indigo-500/20 to-purple-500/10' },
-            { label: 'Documents Uploaded', value: '12', icon: Upload, color: 'from-teal-500/20 to-cyan-500/10' },
-            { label: 'Saved Programs', value: '5', icon: Globe, color: 'from-gold-500/20 to-orange-500/10' },
-            { label: 'Profile Complete', value: '78%', icon: User, color: 'from-pink-500/20 to-rose-500/10' },
+            { label: 'Active Applications', value: activeApplicationsCount.toString(), icon: FileText, color: 'from-indigo-500/20 to-purple-500/10' },
+            { label: 'Documents Uploaded', value: documents.length.toString(), icon: Upload, color: 'from-teal-500/20 to-cyan-500/10' },
+            { label: 'Available Programs', value: programs.length.toString(), icon: Globe, color: 'from-gold-500/20 to-orange-500/10' },
+            { label: 'Profile Complete', value: `${profileCompleteness}%`, icon: User, color: 'from-pink-500/20 to-rose-500/10' },
           ].map((s, i) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
               className={`glass rounded-xl p-4 bg-gradient-to-br ${s.color} relative overflow-hidden`}>
@@ -211,20 +300,19 @@ export default function DashboardPage() {
                   <Bell size={16} className="text-gold-400" /> Notifications
                 </h3>
                 <div className="space-y-3">
-                  {[
-                    { msg: 'Your Canada Express Entry application is under review', time: '2 hours ago', color: 'text-gold-400' },
-                    { msg: 'Document verification complete for Work Experience Letter', time: '1 day ago', color: 'text-teal-400' },
-                    { msg: 'New documents required for Germany Work Permit', time: '2 days ago', color: 'text-red-400' },
-                    { msg: 'Profile completeness is 78%. Upload remaining documents', time: '3 days ago', color: 'text-slate-400' },
-                  ].map((n, i) => (
-                    <div key={i} className="flex gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
-                      <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-current ${n.color}`} />
-                      <div>
-                        <p className="text-sm text-slate-300">{n.msg}</p>
-                        <span className="text-xs text-slate-500">{n.time}</span>
+                  {notifications.length === 0 ? (
+                    <div className="text-slate-500 text-sm">No new notifications</div>
+                  ) : (
+                    notifications.slice(0, 4).map((n, i) => (
+                      <div key={i} className="flex gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                        <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-current ${n.color}`} />
+                        <div>
+                          <p className="text-sm text-slate-300">{n.msg}</p>
+                          <span className="text-xs text-slate-500">{n.time}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -272,7 +360,11 @@ export default function DashboardPage() {
                           </td>
                           <td className="text-slate-400">{new Date(app.created_at).toLocaleDateString()}</td>
                           <td>
-                            <button className="text-gold-400 hover:text-gold-300 text-sm flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedApplication(app)}
+                              className="text-gold-400 hover:text-gold-300 text-sm flex items-center gap-1"
+                            >
                               View <ChevronRight size={14} />
                             </button>
                           </td>
@@ -305,7 +397,11 @@ export default function DashboardPage() {
                   <h3 className="text-white font-semibold">Uploaded Documents</h3>
                 </div>
                 <div className="divide-y divide-white/5">
-                  {mockDocuments.map((doc, i) => (
+                  {loadingDocs ? (
+                    <div className="p-4 text-center text-slate-500">Loading documents...</div>
+                  ) : documents.length === 0 ? (
+                    <div className="p-4 text-center text-slate-500">No documents uploaded yet.</div>
+                  ) : documents.map((doc, i) => (
                     <div key={i} className="flex items-center gap-4 p-4 hover:bg-white/3 transition-colors">
                       <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
                         <FileText size={18} className="text-red-400" />
@@ -314,10 +410,17 @@ export default function DashboardPage() {
                         <div className="text-sm font-medium text-white">{doc.name}</div>
                         <div className="text-xs text-slate-500">{doc.size} • {doc.date}</div>
                       </div>
-                      <span className={doc.status === 'Verified' ? 'badge badge-teal text-xs' : 'badge badge-gold text-xs'}>
+                      <span className="badge badge-teal text-xs">
                         {doc.status}
                       </span>
-                      <button className="text-slate-400 hover:text-slate-200 p-1.5">
+                      <button 
+                        onClick={async () => {
+                          const { data, error } = await supabase.storage.from('user-documents').createSignedUrl(doc.path, 60)
+                          if (data) window.open(data.signedUrl, '_blank')
+                          else toast.error('Could not download file')
+                        }}
+                        className="text-slate-400 hover:text-slate-200 p-1.5"
+                      >
                         <Download size={15} />
                       </button>
                     </div>
@@ -327,30 +430,38 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Saved Programs */}
+          {/* Available Programs */}
           {activeTab === 'saved' && (
             <div className="grid md:grid-cols-3 gap-4">
-              {savedPrograms.map((prog, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                  className="glass rounded-xl p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="text-3xl">{prog.flag}</div>
-                    <span className="badge badge-purple text-xs">{prog.type}</span>
-                  </div>
-                  <h3 className="text-white font-semibold mb-3">{prog.name}</h3>
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between text-slate-400">
-                      <span>Points / Score</span>
-                      <span className="text-white">{prog.points}</span>
+              {loadingPrograms ? (
+                <div className="col-span-3 text-center py-8 text-slate-500">Loading programs...</div>
+              ) : programs.length === 0 ? (
+                <div className="col-span-3 text-center py-8 text-slate-500">No programs available at the moment.</div>
+              ) : (
+                programs.map((prog, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                    className="glass rounded-xl p-5 flex flex-col">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="text-3xl">
+                        {prog.country === 'Canada' ? '🇨🇦' : prog.country === 'Australia' ? '🇦🇺' : prog.country === 'Germany' ? '🇩🇪' : prog.country === 'UK' ? '🇬🇧' : '🌍'}
+                      </div>
+                      <span className="badge badge-purple text-xs">{prog.visa_type}</span>
                     </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Next Draw</span>
-                      <span className="text-white">{prog.deadline}</span>
+                    <h3 className="text-white font-semibold mb-3 flex-1">{prog.name}</h3>
+                    <div className="space-y-1.5 text-sm mb-4">
+                      <div className="flex justify-between text-slate-400">
+                        <span>Processing</span>
+                        <span className="text-white">{prog.processing_time || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Country</span>
+                        <span className="text-white">{prog.country}</span>
+                      </div>
                     </div>
-                  </div>
-                  <button className="btn-primary w-full text-sm mt-4 py-2">Apply Now</button>
-                </motion.div>
-              ))}
+                    <Link to="/apply" className="btn-primary w-full text-sm py-2 text-center block">Apply Now</Link>
+                  </motion.div>
+                ))
+              )}
             </div>
           )}
 
@@ -363,7 +474,8 @@ export default function DashboardPage() {
                   {[
                     { label: 'Full Name', value: profileData.fullName, name: 'fullName', placeholder: 'John Smith' },
                     { label: 'Email Address', value: profileData.email, name: 'email', placeholder: 'john@email.com', disabled: true },
-                    { label: 'Phone Number', value: profileData.phone, name: 'phone', placeholder: '+1 234 567 890' },
+                    { label: 'WhatsApp Number', value: profileData.whatsapp || '', name: 'whatsapp', placeholder: '+91 99250 64666' },
+                    { label: 'Phone Number', value: profileData.phone, name: 'phone', placeholder: '+91 234 567 890' },
                     { label: 'Nationality', value: profileData.nationality, name: 'nationality', placeholder: 'Indian' },
                     { label: 'Current Country', value: profileData.currentCountry, name: 'currentCountry', placeholder: 'United Arab Emirates' },
                     { label: 'Desired Country', value: profileData.desiredCountry, name: 'desiredCountry', placeholder: 'Canada' },
@@ -386,6 +498,52 @@ export default function DashboardPage() {
             </div>
           )}
         </motion.div>
+
+        {selectedApplication && (
+          <div className="fixed inset-0 z-50 bg-navy-950/70 backdrop-blur-sm flex items-center justify-center px-4">
+            <div className="glass-premium rounded-2xl p-6 max-w-lg w-full border border-white/10">
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-1">Application Details</h3>
+                  <p className="text-sm text-slate-400">{selectedApplication.full_name}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedApplication(null)}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Service</span>
+                  <span className="text-white text-right">{selectedApplication.service.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Country</span>
+                  <span className="text-white text-right">{selectedApplication.country}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Status</span>
+                  <span className="text-white text-right capitalize">{selectedApplication.status.replace('_', ' ')}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Email</span>
+                  <span className="text-white text-right">{selectedApplication.email}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500">Phone</span>
+                  <span className="text-white text-right">{selectedApplication.phone}</span>
+                </div>
+                <div className="pt-3 border-t border-white/10">
+                  <div className="text-slate-500 mb-2">Message</div>
+                  <p className="text-slate-300 leading-relaxed">{selectedApplication.message}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

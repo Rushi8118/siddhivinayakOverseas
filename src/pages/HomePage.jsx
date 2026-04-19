@@ -4,16 +4,68 @@ import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import {
   Briefcase, GraduationCap, Globe, ArrowRight, Star, CheckCircle,
   Users, Award, Clock, Shield, TrendingUp, Zap, ChevronRight, Play,
-  MessageCircle, Building, FileCheck, Sparkles
+  MessageCircle, Building, FileCheck, Sparkles, Phone
 } from 'lucide-react'
+
+const COUNTRY_CODES = [
+  { code: '+91', flag: '🇮🇳', name: 'India' },
+  { code: '+1', flag: '🇺🇸', name: 'USA' },
+  { code: '+1', flag: '🇨🇦', name: 'Canada' },
+  { code: '+44', flag: '🇬🇧', name: 'UK' },
+  { code: '+61', flag: '🇦🇺', name: 'Australia' },
+  { code: '+64', flag: '🇳🇿', name: 'New Zealand' },
+  { code: '+49', flag: '🇩🇪', name: 'Germany' },
+  { code: '+33', flag: '🇫🇷', name: 'France' },
+  { code: '+39', flag: '🇮🇹', name: 'Italy' },
+  { code: '+34', flag: '🇪🇸', name: 'Spain' },
+  { code: '+31', flag: '🇳🇱', name: 'Netherlands' },
+  { code: '+46', flag: '🇸🇪', name: 'Sweden' },
+  { code: '+47', flag: '🇳🇴', name: 'Norway' },
+  { code: '+45', flag: '🇩🇰', name: 'Denmark' },
+  { code: '+41', flag: '🇨🇭', name: 'Switzerland' },
+  { code: '+65', flag: '🇸🇬', name: 'Singapore' },
+  { code: '+60', flag: '🇲🇾', name: 'Malaysia' },
+  { code: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+92', flag: '🇵🇰', name: 'Pakistan' },
+  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
+  { code: '+94', flag: '🇱🇰', name: 'Sri Lanka' },
+  { code: '+977', flag: '🇳🇵', name: 'Nepal' },
+  { code: '+81', flag: '🇯🇵', name: 'Japan' },
+  { code: '+82', flag: '🇰🇷', name: 'South Korea' },
+  { code: '+86', flag: '🇨🇳', name: 'China' },
+  { code: '+55', flag: '🇧🇷', name: 'Brazil' },
+  { code: '+27', flag: '🇿🇦', name: 'South Africa' },
+]
+
+// Smart country code detector: supports +44, 0044, handles longest match first
+function detectCountryCode(value, codes) {
+  let normalized = value.trim()
+  if (normalized.startsWith('00') && normalized.length > 3) {
+    normalized = '+' + normalized.slice(2)
+  }
+  if (!normalized.startsWith('+')) return null
+  const sorted = [...codes].sort((a, b) => b.code.length - a.code.length)
+  for (const c of sorted) {
+    if (normalized.startsWith(c.code)) {
+      const rest = normalized.slice(c.code.length).replace(/^[\s-]+/, '')
+      return { ...c, number: rest }
+    }
+  }
+  return null
+}
+
 import Globe3D from '../components/Globe3D'
+import SEO from '../components/SEO'
+import { submitConsultation } from '../lib/supabaseClient'
+import { customerReviews, getReviewInitials } from '../data/reviews'
 
 // Trust & Social Proof Data
 const stats = [
-  { number: '50,000+', label: 'Clients Worldwide', icon: Users },
+  { number: '100+', label: 'Clients Worldwide', icon: Users },
   { number: '98%', label: 'Success Rate', icon: TrendingUp },
-  { number: '45+', label: 'Countries', icon: Globe },
-  { number: '15+', label: 'Years Experience', icon: Award },
+  { number: '40+', label: 'Countries', icon: Globe },
+  { number: ' 5+', label: 'Years Experience', icon: Award },
 ]
 
 const services = [
@@ -60,95 +112,18 @@ const countries = [
   { name: 'Ireland', flag: '🇮🇪', visas: '7 Visa Types', popular: 'Critical Skills', path: '/countries/ireland', color: 'from-green-500/20 to-orange-500/10' },
 ]
 
-// Globe markers for supported countries/regions (approximate lat/lon)
-const countryMarkers = [
-  // Europe (West & North)
-  { name: 'Germany', lat: 51.1657, lon: 10.4515, color: '#fbbf24', flag: '🇩🇪' },
-  { name: 'UK', lat: 55.3781, lon: -3.4360, color: '#60a5fa', flag: '🇬🇧' },
-  { name: 'France', lat: 46.2276, lon: 2.2137, color: '#818cf8', flag: '🇫🇷' },
-  { name: 'Ireland', lat: 53.4129, lon: -8.2439, color: '#2dd4bf', flag: '🇮🇪' },
-  { name: 'Netherlands', lat: 52.1326, lon: 5.2913, color: '#60a5fa', flag: '🇳🇱' },
-  { name: 'Switzerland', lat: 46.8182, lon: 8.2275, color: '#fbbf24', flag: '🇨🇭' },
-  { name: 'Denmark', lat: 56.2639, lon: 9.5018, color: '#2dd4bf', flag: '🇩🇰' },
-  { name: 'Sweden', lat: 60.1282, lon: 18.6435, color: '#60a5fa', flag: '🇸🇪' },
-  { name: 'Norway', lat: 60.4720, lon: 8.4689, color: '#60a5fa', flag: '🇳🇴' },
-  { name: 'Finland', lat: 61.9241, lon: 25.7482, color: '#60a5fa', flag: '🇫🇮' },
-  // Europe (South & East)
-  { name: 'Spain', lat: 40.4637, lon: -3.7492, color: '#fbbf24', flag: '🇪🇸' },
-  { name: 'Portugal', lat: 39.3999, lon: -8.2245, color: '#fbbf24', flag: '🇵🇹' },
-  { name: 'Malta', lat: 35.9375, lon: 14.3754, color: '#fbbf24', flag: '🇲🇹' },
-  { name: 'Poland', lat: 51.9194, lon: 19.1451, color: '#fbbf24', flag: '🇵🇱' },
-  { name: 'Austria', lat: 47.5162, lon: 14.5501, color: '#fbbf24', flag: '🇦🇹' },
-  { name: 'Croatia', lat: 45.1000, lon: 15.2000, color: '#fbbf24', flag: '🇭🇷' },
-  { name: 'Greece', lat: 39.0742, lon: 21.8243, color: '#fbbf24', flag: '🇬🇷' },
-  { name: 'Romania', lat: 45.9432, lon: 24.9668, color: '#fbbf24', flag: '🇷🇴' },
-  { name: 'Slovakia', lat: 48.6690, lon: 19.6990, color: '#fbbf24', flag: '🇸🇰' },
-  { name: 'Hungary', lat: 47.1625, lon: 19.5033, color: '#fbbf24', flag: '🇭🇺' },
-  // Europe (East)
-  { name: 'Albania', lat: 41.1533, lon: 20.1683, color: '#fbbf24', flag: '🇦🇱' },
-  { name: 'Armenia', lat: 40.0691, lon: 45.0382, color: '#fbbf24', flag: '🇦🇲' },
-  { name: 'Belarus', lat: 53.7098, lon: 27.9534, color: '#fbbf24', flag: '🇧🇾' },
-  { name: 'Moldova', lat: 47.4116, lon: 28.3699, color: '#fbbf24', flag: '🇲🇩' },
-  { name: 'Azerbaijan', lat: 40.1431, lon: 47.5769, color: '#fbbf24', flag: '🇦🇿' },
-  { name: 'Russia', lat: 61.5240, lon: 105.3188, color: '#fbbf24', flag: '🇷🇺' },
-  // Americas & Pacific
-  { name: 'Canada', lat: 56.1304, lon: -106.3468, color: '#60a5fa', flag: '🇨🇦' },
-  { name: 'Australia', lat: -25.2744, lon: 133.7751, color: '#2dd4bf', flag: '🇦🇺' },
-  { name: 'New Zealand', lat: -40.9006, lon: 174.8860, color: '#2dd4bf', flag: '🇳🇿' },
-  // Asia, Middle East & Africa
-  { name: 'Singapore', lat: 1.3521, lon: 103.8198, color: '#60a5fa', flag: '🇸🇬' },
-  { name: 'Malaysia', lat: 4.2105, lon: 101.9758, color: '#60a5fa', flag: '🇲🇾' },
-  { name: 'Maldives', lat: 3.2028, lon: 73.2207, color: '#60a5fa', flag: '🇲🇻' },
-  { name: 'Kazakhstan', lat: 48.0196, lon: 66.9237, color: '#60a5fa', flag: '🇰🇿' },
-  { name: 'Saudi Arabia', lat: 23.8859, lon: 45.0792, color: '#60a5fa', flag: '🇸🇦' },
-  { name: 'Qatar', lat: 25.2854, lon: 51.5310, color: '#60a5fa', flag: '🇶🇦' },
-  { name: 'Israel', lat: 31.0461, lon: 34.8516, color: '#60a5fa', flag: '🇮🇱' },
-  { name: 'Gulf Region', lat: 25.0, lon: 51.0, color: '#60a5fa', flag: '🚩' },
-  { name: 'Africa Region', lat: 1.5, lon: 17.0, color: '#60a5fa', flag: '🌍' },
-]
-
-const testimonials = [
-  {
-    name: 'Priya Sharma',
-    role: 'Software Engineer',
-    country: 'India to Canada',
-    rating: 5,
-    text: 'SiddhivinayakOverseas made my dream of working in Canada a reality. The team was incredibly knowledgeable and supportive throughout the entire process. Highly recommended!',
-    visa: 'Express Entry PR',
-    avatar: 'PS',
-  },
-  {
-    name: 'Ahmed Al-Rashid',
-    role: 'Data Scientist',
-    country: 'UAE to Germany',
-    rating: 5,
-    text: 'I got my EU Blue Card in just 3 months! The consultants knew exactly what documents were needed and guided me flawlessly. Exceptional service!',
-    visa: 'EU Blue Card',
-    avatar: 'AR',
-  },
-  {
-    name: 'Chen Wei',
-    role: 'Graduate Student',
-    country: 'China to Australia',
-    rating: 5,
-    text: 'From student visa to permanent residency, SiddhivinayakOverseas was with me every step. They genuinely care about their clients\' success.',
-    visa: 'Skilled Migration',
-    avatar: 'CW',
-  },
-]
-
 const trustBadges = [
-  { icon: Shield, label: 'ICCRC Certified', desc: 'Licensed Consultants' },
-  { icon: FileCheck, label: 'ISO 9001:2015', desc: 'Quality Certified' },
-  { icon: Award, label: 'BBB A+ Rated', desc: 'Accredited Business' },
+  // { icon: Shield, label: 'ICCRC Certified', desc: 'Licensed Consultants' },
+  // { icon: FileCheck, label: 'ISO 9001:2015', desc: 'Quality Certified' },
+  // { icon: Award, label: 'BBB A+ Rated', desc: 'Accredited Business' },
   { icon: Clock, label: '24/7 Support', desc: 'Always Available' },
 ]
 
 const processSteps = [
-  { step: '01', title: 'Free Assessment', desc: 'Complete our eligibility assessment to understand your immigration options.' },
-  { step: '02', title: 'Strategy Planning', desc: 'Our experts create a personalized immigration strategy tailored to your goals.' },
-  { step: '03', title: 'Document Preparation', desc: 'We guide you through collecting and preparing all required documentation.' },
-  { step: '04', title: 'Application & Approval', desc: 'We submit your application and track it until successful approval.' },
+  { step: '01', icon: FileCheck, title: 'Free Assessment',       desc: 'Complete our eligibility assessment to understand your immigration options.' },
+  { step: '02', icon: Users,     title: 'Strategy Planning',     desc: 'Our experts create a personalized immigration strategy tailored to your goals.' },
+  { step: '03', icon: Briefcase, title: 'Document Preparation',  desc: 'We guide you through collecting and preparing all required documentation.' },
+  { step: '04', icon: CheckCircle,title: 'Application & Approval',desc: 'We submit your application and track it until successful approval.' },
 ]
 
 // Animation Variants
@@ -171,7 +146,7 @@ const scaleIn = {
 function AnimatedSection({ children, className = '', delay = 0 }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
-  
+
   return (
     <motion.div
       ref={ref}
@@ -210,28 +185,64 @@ function CountryFlag({ country }) {
 }
 
 export default function HomePage() {
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' })
+  const [formData, setFormData] = useState({
+    name: '', email: '',
+    phoneCode: '+91', phone: '',
+    whatsappCode: '+91', whatsapp: '',
+    service: '', message: ''
+  })
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [phoneDetected, setPhoneDetected] = useState(null)
+  const [waDetected, setWaDetected] = useState(null)
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0])
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 0.95])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 3000)
+    setSubmitting(true)
+    try {
+      const { error } = await submitConsultation({
+        name: formData.name,
+        email: formData.email,
+        phone: `${formData.phoneCode} ${formData.phone}`,
+        whatsapp: `${formData.whatsappCode} ${formData.whatsapp}`,
+        service_type: formData.service,
+        message: formData.message,
+        country: 'Not Specified'
+      })
+      if (error) throw error
+      setSubmitted(true)
+      setFormData({
+        name: '', email: '',
+        phoneCode: '+91', phone: '',
+        whatsappCode: '+91', whatsapp: '',
+        service: '', message: ''
+      })
+      setTimeout(() => setSubmitted(false), 5000)
+    } catch (err) {
+      console.error('Error submitting consultation:', err)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <div className="bg-navy-950">
+      <SEO
+        title="Expert Immigration Consultants"
+        description="Trusted immigration consultancy with 15+ years experience and 98% success rate. Expert guidance for work permits, study visas, and permanent residency in Canada, Australia, UK, Germany & USA."
+        keywords="immigration consultant, work permit, study visa, Canada PR, Australia visa, Germany Blue Card, UK skilled worker visa"
+      />
       {/* ========== HERO SECTION ========== */}
       <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 hero-bg" />
         <div className="absolute inset-0 mesh-gradient opacity-60" />
         <div className="absolute inset-0 dot-pattern opacity-30" />
-        
+
         {/* Animated Gradient Orbs */}
         <motion.div
           className="absolute top-20 left-10 w-[500px] h-[500px] rounded-full"
@@ -285,7 +296,7 @@ export default function HomePage() {
                     <span className="gradient-text">Work Permits</span>{' '}
                     & Vacancies Available
                   </h1>
-                  
+
                   <p className="text-lg text-slate-400 leading-relaxed mb-8 max-w-lg">
                     Secure your future with globally recognized visas and work opportunities.
                     Premium guidance, fast processing, and{' '}
@@ -346,16 +357,7 @@ export default function HomePage() {
                 className="relative block mt-10 md:mt-0"
               >
                 <div className="w-full aspect-square max-w-[18rem] sm:max-w-md md:max-w-lg mx-auto relative">
-                  {/* Globe Glow Effect */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-royal-500/20 via-teal-500/10 to-transparent blur-3xl" />
-                  <Globe3D markers={countryMarkers} autoRotateSpeed={0.005} enableZoom showTooltip />
-                </div>
-
-                {/* Countries Legend */}
-                <div className="absolute left-0 bottom-6 z-20">
-                  <div className="glass-card rounded-xl p-3">
-                    <div className="text-xs text-slate-400">Hover markers to see country names</div>
-                  </div>
+                  <Globe3D autoRotateSpeed={0.005} enableZoom />
                 </div>
 
                 {/* Floating Cards */}
@@ -471,8 +473,8 @@ export default function HomePage() {
               Immigration Solutions That <span className="gradient-text">Work</span>
             </h2>
             <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-              Comprehensive immigration services tailored to your unique needs, 
-              backed by 15+ years of expertise.
+              Comprehensive immigration services tailored to your unique needs,
+              backed by 5+ years of expertise.
             </p>
           </AnimatedSection>
 
@@ -491,20 +493,20 @@ export default function HomePage() {
                   <div className={`glass-card rounded-2xl p-8 h-full relative overflow-hidden transition-all duration-500 group-hover:border-royal-500/30`}>
                     {/* Background Gradient */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${service.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                    
+
                     <div className="relative z-10">
                       {/* Badge */}
                       <div className="badge badge-gold mb-6 text-xs">{service.badge}</div>
-                      
+
                       {/* Icon */}
                       <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                         <service.icon size={26} className="text-white" />
                       </div>
-                      
+
                       {/* Content */}
                       <h3 className="text-xl font-bold text-white mb-3">{service.title}</h3>
                       <p className="text-slate-400 text-sm leading-relaxed mb-6">{service.desc}</p>
-                      
+
                       {/* Stats */}
                       <div className="flex items-center justify-between pt-4 border-t border-white/5">
                         <span className="text-xs text-teal-400 font-medium">{service.stats}</span>
@@ -586,16 +588,42 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.15 }}
                 viewport={{ once: true }}
-                className="relative"
+                whileHover={{ y: -10, transition: { duration: 0.25, ease: 'easeOut' } }}
+                className="relative group"
               >
-                <div className="glass-card rounded-2xl p-6 h-full">
-                  <div className="text-5xl font-bold text-royal-500/20 mb-4">{step.step}</div>
-                  <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">{step.desc}</p>
+                <div className="glass-card rounded-2xl p-6 h-full relative overflow-hidden transition-all duration-300 group-hover:border-royal-500/40 group-hover:shadow-[0_0_30px_rgba(37,99,235,0.2)]">
+                  {/* Hover background glow */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-royal-500/10 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+
+                  <div className="relative z-10">
+                    {/* Step number */}
+                    <motion.div
+                      className="text-5xl font-bold mb-4 transition-colors duration-300 group-hover:text-royal-500/60"
+                      style={{ color: 'rgba(37,99,235,0.2)' }}
+                    >
+                      {step.step}
+                    </motion.div>
+
+                    {/* Icon */}
+                    {step.icon && (
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-royal-500/20 to-teal-500/20 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:from-royal-500/40 group-hover:to-teal-500/30 transition-all duration-300">
+                        <step.icon size={22} className="text-royal-400 group-hover:text-royal-300 transition-colors duration-300" />
+                      </div>
+                    )}
+
+                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-royal-200 transition-colors duration-300">
+                      {step.title}
+                    </h3>
+                    <p className="text-slate-400 text-sm leading-relaxed group-hover:text-slate-300 transition-colors duration-300">
+                      {step.desc}
+                    </p>
+                  </div>
                 </div>
+
+                {/* Connector arrow */}
                 {i < 3 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                    <ChevronRight size={24} className="text-royal-500/30" />
+                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10 transition-colors duration-300 group-hover:text-royal-400">
+                    <ChevronRight size={24} className="text-royal-500/30 group-hover:text-royal-400 transition-colors duration-300" />
                   </div>
                 )}
               </motion.div>
@@ -615,7 +643,7 @@ export default function HomePage() {
                 <span className="gradient-text">50,000+ Clients</span>
               </h2>
               <p className="text-slate-400 leading-relaxed mb-10 text-lg">
-                With over 15 years of experience, our team of certified immigration consultants 
+                With over 15 years of experience, our team of certified immigration consultants
                 has helped thousands achieve their international dreams.
               </p>
 
@@ -649,13 +677,13 @@ export default function HomePage() {
             </AnimatedSection>
 
             <AnimatedSection delay={0.2}>
-              <div className="glass-premium rounded-3xl p-8 relative overflow-hidden">
+              <div className="glass-premium rounded-3xl p-8 relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-royal-500/20 to-teal-500/10 rounded-full -mr-20 -mt-20 blur-3xl" />
-                
+
                 <div className="relative z-10">
                   <h3 className="text-2xl font-bold text-white mb-2">Free Consultation</h3>
                   <p className="text-slate-400 mb-8">Get expert advice on your immigration journey</p>
-                  
+
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                       <label className="label">Full Name</label>
@@ -667,41 +695,130 @@ export default function HomePage() {
                         required
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="label">Email</label>
+                    <div>
+                      <label className="label">Email</label>
+                      <input
+                        className="input-glass"
+                        type="email"
+                        placeholder="john@email.com"
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    {/* Phone with country code */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <label className="label" style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
+                          <Phone size={13} className="text-royal-400" /> Phone Number
+                        </label>
+                        {phoneDetected && (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            fontSize: '11px', color: '#4ade80',
+                            background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+                            borderRadius: '9999px', padding: '2px 8px'
+                          }}>✓ Detected {phoneDetected.flag} {phoneDetected.name}</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <select
+                          style={{ width: '110px', flexShrink: 0 }}
+                          className="input-glass text-white bg-navy-900"
+                          value={formData.phoneCode}
+                          onChange={e => setFormData({ ...formData, phoneCode: e.target.value })}
+                        >
+                          {COUNTRY_CODES.map((c, i) => (
+                            <option key={i} value={c.code} className="text-white bg-navy-900">
+                              {c.flag} {c.code}
+                            </option>
+                          ))}
+                        </select>
                         <input
+                          style={{ flex: 1, minWidth: 0 }}
                           className="input-glass"
-                          type="email"
-                          placeholder="john@email.com"
-                          value={formData.email}
-                          onChange={e => setFormData({ ...formData, email: e.target.value })}
+                          type="tel"
+                          placeholder={`e.g. ${formData.phoneCode} 9876543210`}
+                          value={formData.phone}
+                          onChange={e => {
+                            const val = e.target.value
+                            const det = detectCountryCode(val, COUNTRY_CODES)
+                            if (det) {
+                              setFormData({ ...formData, phoneCode: det.code, phone: det.number })
+                              setPhoneDetected(det)
+                              setTimeout(() => setPhoneDetected(null), 3000)
+                            } else {
+                              setFormData({ ...formData, phone: val })
+                              setPhoneDetected(null)
+                            }
+                          }}
                           required
                         />
                       </div>
-                      <div>
-                        <label className="label">Phone</label>
+                    </div>
+                    {/* WhatsApp with country code */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <label className="label" style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
+                          <MessageCircle size={13} className="text-green-400" /> WhatsApp Number
+                        </label>
+                        {waDetected && (
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            fontSize: '11px', color: '#4ade80',
+                            background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+                            borderRadius: '9999px', padding: '2px 8px'
+                          }}>✓ Detected {waDetected.flag} {waDetected.name}</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <select
+                          style={{ width: '110px', flexShrink: 0 }}
+                          className="input-glass text-white bg-navy-900"
+                          value={formData.whatsappCode}
+                          onChange={e => setFormData({ ...formData, whatsappCode: e.target.value })}
+                        >
+                          {COUNTRY_CODES.map((c, i) => (
+                            <option key={i} value={c.code} className="text-white bg-navy-900">
+                              {c.flag} {c.code}
+                            </option>
+                          ))}
+                        </select>
                         <input
+                          style={{ flex: 1, minWidth: 0 }}
                           className="input-glass"
-                          placeholder="+1 234 567 890"
-                          value={formData.phone}
-                          onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                          type="tel"
+                          placeholder={`e.g. ${formData.whatsappCode} 9876543210`}
+                          value={formData.whatsapp}
+                          onChange={e => {
+                            const val = e.target.value
+                            const det = detectCountryCode(val, COUNTRY_CODES)
+                            if (det) {
+                              setFormData({ ...formData, whatsappCode: det.code, whatsapp: det.number })
+                              setWaDetected(det)
+                              setTimeout(() => setWaDetected(null), 3000)
+                            } else {
+                              setFormData({ ...formData, whatsapp: val })
+                              setWaDetected(null)
+                            }
+                          }}
+                          required
                         />
                       </div>
                     </div>
                     <div>
                       <label className="label">Service Needed</label>
                       <select
-                        className="input-glass"
+                        className="input-glass text-white bg-navy-900"
                         value={formData.service}
                         onChange={e => setFormData({ ...formData, service: e.target.value })}
                         required
                       >
-                        <option value="">Select service...</option>
-                        <option value="work-permit">Work Permit</option>
-                        <option value="study-visa">Study Visa</option>
-                        <option value="immigration">Immigration / PR</option>
-                        <option value="job-assistance">Job Assistance</option>
+                        <option value="" className="text-slate-400 bg-navy-900">Select service...</option>
+                        <option value="work-permit" className="text-white bg-navy-900">Work Permit</option>
+                        <option value="study-visa" className="text-white bg-navy-900">Study Visa</option>
+                        {/* <option value="immigration" className="text-white bg-navy-900">Immigration / PR</option>
+                        <option value="job-assistance" className="text-white bg-navy-900">Job Assistance</option> */}
                       </select>
                     </div>
                     <div>
@@ -718,12 +835,13 @@ export default function HomePage() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       type="submit"
+                      disabled={submitting || submitted}
                       className="btn-primary w-full"
                     >
-                      {submitted ? 'Request Sent!' : 'Book Free Consultation'}
+                      {submitting ? 'Sending...' : submitted ? 'Request Sent!' : 'Book Free Consultation'}
                     </motion.button>
                   </form>
-                  
+
                   <p className="text-xs text-slate-500 text-center mt-4">
                     No commitment required - Response within 2 hours
                   </p>
@@ -750,10 +868,10 @@ export default function HomePage() {
             </p>
           </AnimatedSection>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {testimonials.map((testimonial, i) => (
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+            {customerReviews.slice(0, 6).map((testimonial, i) => (
               <motion.div
-                key={testimonial.name}
+                key={`${testimonial.name}-${testimonial.country}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.15 }}
@@ -766,23 +884,23 @@ export default function HomePage() {
                     <Star key={idx} size={16} className="text-gold-400 fill-gold-400" />
                   ))}
                 </div>
-                
+
                 {/* Quote */}
                 <p className="text-slate-300 leading-relaxed mb-6 text-sm">
                   &quot;{testimonial.text}&quot;
                 </p>
-                
+
                 {/* Author */}
                 <div className="flex items-center gap-3 pt-4 border-t border-white/5">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-royal-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
-                    {testimonial.avatar}
+                    {getReviewInitials(testimonial.name)}
                   </div>
                   <div>
                     <div className="text-white font-semibold">{testimonial.name}</div>
                     <div className="text-slate-500 text-xs">{testimonial.country}</div>
                   </div>
                 </div>
-                
+
                 {/* Visa Badge */}
                 <div className="absolute top-6 right-6">
                   <div className="badge badge-teal text-xs">{testimonial.visa}</div>
@@ -790,6 +908,19 @@ export default function HomePage() {
               </motion.div>
             ))}
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <Link to="/reviews">
+              <button className="btn-outline inline-flex items-center gap-2">
+                More Reviews <ArrowRight size={18} />
+              </button>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
@@ -797,7 +928,7 @@ export default function HomePage() {
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-royal-500/10 via-teal-500/5 to-royal-500/10" />
         <div className="absolute inset-0 dot-pattern opacity-20" />
-        
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <AnimatedSection>
             <motion.div
@@ -810,7 +941,7 @@ export default function HomePage() {
                 Ready to Start Your Journey?
               </h2>
               <p className="text-slate-400 mb-8 text-lg max-w-xl mx-auto">
-                Take the first step towards your international dreams. 
+                Take the first step towards your international dreams.
                 Book a free consultation with our certified experts today.
               </p>
               <div className="flex flex-wrap justify-center gap-4">

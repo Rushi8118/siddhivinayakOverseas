@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { 
-  Globe, Mail, Phone, MapPin, ArrowRight, Shield, Award, Clock, 
-  MessageCircle
+  Mail, Phone, MapPin, ArrowRight, Shield, Award, Clock
 } from 'lucide-react'
-import { FaFacebook, FaTwitter, FaLinkedin, FaInstagram, FaYoutube } from 'react-icons/fa'
+import { FaFacebook, FaInstagram, FaWhatsapp } from 'react-icons/fa'
+import toast from 'react-hot-toast'
 
 const services = [
   { name: 'Work Permit', path: '/services/work-permit' },
@@ -21,14 +21,13 @@ const countries = [
   { name: 'Germany', path: '/countries/germany' },
   { name: 'United Kingdom', path: '/countries/uk' },
   { name: 'USA', path: '/countries/usa' },
-  { name: 'New Zealand', path: '/programs' },
+  { name: 'New Zealand', path: '/countries/new-zealand' },
 ]
 
 const company = [
-  { name: 'About Us', path: '/about' },
-  { name: 'Our Team', path: '/about' },
-  { name: 'Careers', path: '/careers' },
-  { name: 'Blog', path: '/blog' },
+  { name: 'About Us', path: '/contact' },
+  { name: 'Our Team', path: '/contact' },
+  { name: 'Careers', path: '/contact' },
   { name: 'Contact', path: '/contact' },
 ]
 
@@ -39,11 +38,9 @@ const trustBadges = [
 ]
 
 const socialLinks = [
-  { icon: FaFacebook, href: '#', label: 'Facebook' },
-  { icon: FaTwitter, href: '#', label: 'Twitter' },
-  { icon: FaLinkedin, href: '#', label: 'LinkedIn' },
-  { icon: FaInstagram, href: '#', label: 'Instagram' },
-  { icon: FaYoutube, href: '#', label: 'YouTube' },
+  { icon: FaFacebook,  href: '#',                             label: 'Facebook',  hoverColor: '#1877F2' },
+  { icon: FaInstagram, href: '#',                             label: 'Instagram', hoverColor: '#E1306C' },
+  { icon: FaWhatsapp,  href: 'https://wa.me/919925064666',    label: 'WhatsApp',  hoverColor: '#25D366' },
 ]
 
 export default function Footer() {
@@ -65,11 +62,20 @@ export default function Footer() {
               </p>
             </div>
             <div>
-              <form className="flex flex-col sm:flex-row gap-3">
+              <form className="flex flex-col sm:flex-row gap-3" onSubmit={(e) => {
+                e.preventDefault()
+                const email = e.target.email.value
+                if (email) {
+                  toast.success('Subscribed! You\'ll receive immigration updates soon.')
+                  e.target.reset()
+                }
+              }}>
                 <input
                   type="email"
+                  name="email"
                   placeholder="Enter your email"
                   className="input-glass flex-1"
+                  required
                 />
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -94,8 +100,8 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-royal-500 to-teal-500 flex items-center justify-center shadow-lg shadow-royal-500/25">
-                <Globe size={24} className="text-white" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-lg shadow-royal-500/20">
+                <img src="/favicon.svg" alt="SiddhivinayakOverseas" className="w-full h-full object-contain" />
               </div>
               <div>
                 <span className="text-xl font-bold text-white tracking-tight">SiddhivinayakOverseas</span>
@@ -124,8 +130,11 @@ export default function Footer() {
                   href={social.href}
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 hover:text-white hover:border-royal-500/30 transition-colors"
+                  style={{ '--hover-color': social.hoverColor }}
+                  className="w-10 h-10 rounded-xl glass flex items-center justify-center text-slate-400 transition-all social-icon"
                   aria-label={social.label}
+                  onMouseEnter={e => e.currentTarget.style.color = social.hoverColor}
+                  onMouseLeave={e => e.currentTarget.style.color = ''}
                 >
                   <social.icon size={18} />
                 </motion.a>
@@ -190,34 +199,35 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm text-slate-400">
                 <MapPin size={16} className="text-royal-400 mt-0.5 flex-shrink-0" />
-                <span>123 Immigration Tower,<br />Toronto, Canada M5H 2N2</span>
+                <span>620 6th Floors Pragti IT Park World<br />Kiranchock To Yogichok Road , Surat , Gujarat</span>
               </li>
               <li>
                 <a 
-                  href="tel:+18005558472" 
+                  href="tel:+919925064666" 
                   className="flex items-center gap-3 text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   <Phone size={16} className="text-royal-400 flex-shrink-0" />
-                  +1 (800) 555-VISA
+                  +91 99250 64666
+                  +44 7471489599
                 </a>
               </li>
               <li>
                 <a 
-                  href="mailto:info@globalvisapro.com" 
+                  href="mailto:info@siddhivinayakoverseas.com" 
                   className="flex items-center gap-3 text-sm text-slate-400 hover:text-white transition-colors"
                 >
                   <Mail size={16} className="text-royal-400 flex-shrink-0" />
-                  info@globalvisapro.com
+                  info@siddhivinayakoverseas.com
                 </a>
               </li>
               <li>
                 <a 
-                  href="https://wa.me/18005558472"
+                  href="https://wa.me/919925064666"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-sm text-slate-400 hover:text-green-400 transition-colors"
                 >
-                  <MessageCircle size={16} className="text-green-400 flex-shrink-0" />
+                  <FaWhatsapp size={16} className="text-green-400 flex-shrink-0" />
                   WhatsApp Support
                 </a>
               </li>
@@ -228,41 +238,22 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="relative border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-slate-500 text-sm">
-              &copy; {new Date().getFullYear()} SiddhivinayakOverseas. All rights reserved.
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            {/* Copyright — top / left */}
+            <p className="text-slate-500 text-sm order-first">
+              &copy; {new Date().getFullYear()} <span className="text-slate-400 font-medium">SiddhivinayakOverseas</span>. All rights reserved.
             </p>
-            <div className="flex flex-wrap justify-center gap-6">
-              {['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'Sitemap'].map((link) => (
-                <a 
-                  key={link} 
-                  href="#" 
-                  className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
-                >
-                  {link}
-                </a>
-              ))}
+            {/* Legal links — right side */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <Link to="/privacy" className="text-slate-500 hover:text-royal-400 text-sm transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="text-slate-500 hover:text-gold-400 text-sm transition-colors">Terms of Service</Link>
+              <Link to="/cookies" className="text-slate-500 hover:text-teal-400 text-sm transition-colors">Cookie Policy</Link>
+              <Link to="/sitemap" className="text-slate-500 hover:text-slate-300 text-sm transition-colors">Sitemap</Link>
             </div>
           </div>
         </div>
       </div>
-
-      {/* WhatsApp Floating Button */}
-      <motion.a
-        href="https://wa.me/18005558472"
-        target="_blank"
-        rel="noopener noreferrer"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1, type: 'spring', stiffness: 200 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30 text-white"
-        aria-label="Chat on WhatsApp"
-      >
-        <MessageCircle size={26} />
-      </motion.a>
     </footer>
   )
 }

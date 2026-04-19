@@ -3,7 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Globe, Mail, Lock, ArrowRight, CheckCircle, Star } from 'lucide-react'
+import { Globe, Mail, Lock, ArrowRight, CheckCircle, Star, User, Phone, MessageCircle } from 'lucide-react'
+import { updateProfile } from '../lib/supabaseClient'
+import SEO from '../components/SEO'
+import { COUNTRY_CODES, detectCountryCode } from '../data/countryCodes'
 
 const benefits = [
   'Track your visa application in real-time',
@@ -13,10 +16,19 @@ const benefits = [
 ]
 
 export default function SignupPage() {
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [contactNumber, setContactNumber] = useState('')
+  const [contactCountryCode, setContactCountryCode] = useState('+91')
+  const [whatsappNumber, setWhatsAppNumber] = useState('')
+  const [whatsappCountryCode, setWhatsAppCountryCode] = useState('+91')
+  const [country, setCountry] = useState('')
   const [loading, setLoading] = useState(false)
+  const [phoneDetected, setPhoneDetected] = useState(null)
+  const [waDetected, setWaDetected] = useState(null)
   const { signUp } = useAuth()
   const navigate = useNavigate()
 
@@ -38,11 +50,24 @@ export default function SignupPage() {
     try {
       if (!signUp) throw new Error('Authentication service unavailable')
 
-      const { error } = await signUp(email, password)
+      const { data, error } = await signUp(email, password, `${firstName} ${lastName}`)
 
       if (error) {
         toast.error(error.message)
       } else {
+        // Update user profile with additional info
+        if (data?.user) {
+          const formattedContact = `${contactCountryCode} ${contactNumber}`
+          const formattedWhatsApp = whatsappNumber ? `${whatsappCountryCode} ${whatsappNumber}` : ''
+          
+          await updateProfile(data.user.id, {
+            phone: formattedContact,
+            whatsapp_number: formattedWhatsApp,
+            desired_country: country,
+            full_name: `${firstName} ${lastName}`
+          })
+        }
+        
         toast.success('Account created successfully! Please check your email to confirm.')
         navigate('/login')
       }
@@ -55,20 +80,21 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-navy-950 flex">
+      <SEO 
+        title="Create Account" 
+        description="Join thousands of successful candidates. Create an account to start your immigration journey, get expert support, and track your visa status."
+      />
       {/* Left Side - Form */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
+          className="w-full max-w-2xl"
         >
           {/* Mobile Logo */}
           <Link to="/" className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-royal-500 to-teal-500 flex items-center justify-center shadow-lg shadow-royal-500/25">
-              <Globe size={22} className="text-white" />
-            </div>
-            <span className="text-xl font-bold text-white tracking-tight">SiddhivinayakOverseas</span>
+            <img src="/logo-white.svg" alt="Siddhivinayak Overseas" className="h-12 w-auto" />
           </Link>
           
           <div className="glass-premium rounded-3xl p-8 lg:p-10">
@@ -77,7 +103,42 @@ export default function SignupPage() {
               <p className="text-slate-400">Start your immigration journey today</p>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="firstName" className="label">First Name</label>
+                  <div className="relative">
+                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 " />
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      required
+                      className="input-glass !pl-12 text-white"
+                      placeholder="Name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="label">Last Name</label>
+                  <div className="relative">
+                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      required
+                      className="input-glass !pl-12 text-white"
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label htmlFor="email" className="label">Email Address</label>
                 <div className="relative">
@@ -87,46 +148,176 @@ export default function SignupPage() {
                     name="email"
                     type="email"
                     required
-                    className="input-glass pl-12"
+                    className="input-glass !pl-12 text-white"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
-              
-              <div>
-                <label htmlFor="password" className="label">Password</label>
-                <div className="relative">
-                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    className="input-glass pl-12"
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Contact Number */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <label className="label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Phone size={13} className="text-royal-400" /> Contact Number
+                    </label>
+                    {phoneDetected && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        fontSize: '11px', color: '#4ade80',
+                        background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+                        borderRadius: '9999px', padding: '2px 8px'
+                      }}>✓ {phoneDetected.flag} {phoneDetected.name}</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <select
+                      style={{ width: '110px', flexShrink: 0 }}
+                      className="input-glass text-white bg-navy-900 text-sm"
+                      value={contactCountryCode}
+                      onChange={e => setContactCountryCode(e.target.value)}
+                    >
+                      {COUNTRY_CODES.map((c, i) => (
+                        <option key={i} value={c.code} className="bg-navy-900">
+                          {c.flag} {c.code}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      id="contactNumber"
+                      type="tel"
+                      required
+                      style={{ flex: 1, minWidth: 0 }}
+                      className="input-glass text-white"
+                      placeholder={`e.g. ${contactCountryCode} 9876...`}
+                      value={contactNumber}
+                      onChange={e => {
+                        const val = e.target.value
+                        const det = detectCountryCode(val)
+                        if (det) {
+                          setContactCountryCode(det.code)
+                          setContactNumber(det.number)
+                          setPhoneDetected(det)
+                          setTimeout(() => setPhoneDetected(null), 3000)
+                        } else {
+                          setContactNumber(val)
+                          setPhoneDetected(null)
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">Must be at least 6 characters</p>
+
+                {/* WhatsApp Number */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <label className="label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <MessageCircle size={13} className="text-green-400" /> WhatsApp Number
+                    </label>
+                    {waDetected && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        fontSize: '11px', color: '#4ade80',
+                        background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+                        borderRadius: '9999px', padding: '2px 8px'
+                      }}>✓ {waDetected.flag} {waDetected.name}</span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <select
+                      style={{ width: '110px', flexShrink: 0 }}
+                      className="input-glass text-white bg-navy-900 text-sm"
+                      value={whatsappCountryCode}
+                      onChange={e => setWhatsAppCountryCode(e.target.value)}
+                    >
+                      {COUNTRY_CODES.map((c, i) => (
+                        <option key={i} value={c.code} className="bg-navy-900">
+                          {c.flag} {c.code}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      id="whatsappNumber"
+                      type="tel"
+                      style={{ flex: 1, minWidth: 0 }}
+                      className="input-glass text-white"
+                      placeholder={`e.g. ${whatsappCountryCode} 9876...`}
+                      value={whatsappNumber}
+                      onChange={e => {
+                        const val = e.target.value
+                        const det = detectCountryCode(val)
+                        if (det) {
+                          setWhatsAppCountryCode(det.code)
+                          setWhatsAppNumber(det.number)
+                          setWaDetected(det)
+                          setTimeout(() => setWaDetected(null), 3000)
+                        } else {
+                          setWhatsAppNumber(val)
+                          setWaDetected(null)
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="country" className="label">Desired Country</label>
+                <div className="relative">
+                  <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <select
+                    id="country"
+                    name="country"
+                    required
+                    className="input-glass !pl-12 text-white bg-navy-900"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                  >
+                    <option value="" className="text-slate-400 bg-navy-900">Select Destination</option>
+                    <option value="Canada" className="text-white bg-navy-900">Canada</option>
+                    <option value="Australia" className="text-white bg-navy-900">Australia</option>
+                    <option value="UK" className="text-white bg-navy-900">United Kingdom</option>
+                    <option value="Germany" className="text-white bg-navy-900">Germany</option>
+                    <option value="Other" className="text-white bg-navy-900">Other</option>
+                  </select>
+                </div>
               </div>
               
-              <div>
-                <label htmlFor="confirmPassword" className="label">Confirm Password</label>
-                <div className="relative">
-                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    className="input-glass pl-12"
-                    placeholder="Confirm your password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="password" className="label">Password</label>
+                  <div className="relative">
+                    <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      required
+                      className="input-glass !pl-12 text-white"
+                      placeholder="Create password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="confirmPassword" className="label">Confirm Password</label>
+                  <div className="relative">
+                    <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      required
+                      className="input-glass !pl-12 text-white"
+                      placeholder="Confirm password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
               
@@ -139,9 +330,9 @@ export default function SignupPage() {
                 />
                 <label htmlFor="terms" className="text-sm text-slate-400">
                   I agree to the{' '}
-                  <a href="#" className="text-royal-400 hover:text-royal-300">Terms of Service</a>{' '}
+                  <Link to="/terms" className="text-royal-400 hover:text-royal-300">Terms of Service</Link>{' '}
                   and{' '}
-                  <a href="#" className="text-royal-400 hover:text-royal-300">Privacy Policy</a>
+                  <Link to="/privacy" className="text-royal-400 hover:text-royal-300">Privacy Policy</Link>
                 </label>
               </div>
               

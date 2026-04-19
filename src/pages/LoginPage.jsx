@@ -1,9 +1,11 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { resendConfirmationEmail } from '../lib/supabaseClient'
 import toast from 'react-hot-toast'
-import { Globe, Mail, Lock, ArrowRight, Shield, Users, Award } from 'lucide-react'
+import { Globe, Mail, Lock, ArrowRight, Shield, Users, Award, RefreshCw } from 'lucide-react'
+import SEO from '../components/SEO'
 
 const trustFeatures = [
   { icon: Shield, label: 'Secure & Encrypted', desc: 'Your data is protected with enterprise-grade security' },
@@ -15,12 +17,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn } = useAuth()
+  const [resending, setResending] = useState(false)
+  const [showResend, setShowResend] = useState(false)
+  const { signIn, user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const redirect = queryParams.get('redirect') || '/dashboard'
+
+  useEffect(() => {
+    if (user) navigate(redirect)
+  }, [user, navigate, redirect])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setShowResend(false)
 
     try {
       if (!signIn) throw new Error('Authentication service unavailable')
@@ -29,9 +41,12 @@ export default function LoginPage() {
 
       if (error) {
         toast.error(error.message)
+        if (error.message.toLowerCase().includes('email not confirmed')) {
+          setShowResend(true)
+        }
       } else {
         toast.success('Logged in successfully!')
-        navigate('/dashboard')
+        navigate(redirect)
       }
     } catch (err) {
       toast.error(err.message || 'Unable to sign in')
@@ -40,8 +55,26 @@ export default function LoginPage() {
     }
   }
 
+  const handleResend = async () => {
+    setResending(true)
+    try {
+      const { error } = await resendConfirmationEmail(email)
+      if (error) throw error
+      toast.success('Confirmation email resent! Please check your inbox.')
+      setShowResend(false)
+    } catch (err) {
+      toast.error(err.message || 'Unable to resend confirmation email')
+    } finally {
+      setResending(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-navy-950 flex">
+      <SEO 
+        title="Login" 
+        description="Sign in to your account to track your visa application, access documents, and manage your immigration profile."
+      />
       {/* Left Side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 hero-bg" />
@@ -140,7 +173,7 @@ export default function LoginPage() {
                     name="email"
                     type="email"
                     required
-                    className="input-glass pl-12"
+                    className="input-glass !pl-12"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -157,7 +190,7 @@ export default function LoginPage() {
                     name="password"
                     type="password"
                     required
-                    className="input-glass pl-12"
+                    className="input-glass !pl-12"
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -190,6 +223,32 @@ export default function LoginPage() {
                   </>
                 )}
               </motion.button>
+
+              {showResend && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-royal-500/10 border border-royal-500/20 rounded-xl p-4 text-center"
+                >
+                  <p className="text-sm text-slate-300 mb-3">
+                    Didn&apos;t receive the confirmation email?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resending}
+                    className="text-royal-400 hover:text-royal-300 text-sm font-semibold flex items-center justify-center gap-2 w-full transition-colors"
+                  >
+                    {resending ? (
+                      'Resending...'
+                    ) : (
+                      <>
+                        <RefreshCw size={16} /> Resend Confirmation Email
+                      </>
+                    )}
+                  </button>
+                </motion.div>
+              )}
             </form>
             
             <div className="mt-8 pt-6 border-t border-white/5 text-center">
@@ -204,9 +263,9 @@ export default function LoginPage() {
           
           <p className="text-center text-slate-500 text-xs mt-6">
             By signing in, you agree to our{' '}
-            <a href="#" className="text-slate-400 hover:text-white">Terms of Service</a>{' '}
+            <Link to="/terms" className="text-slate-400 hover:text-white">Terms of Service</Link>{' '}
             and{' '}
-            <a href="#" className="text-slate-400 hover:text-white">Privacy Policy</a>
+            <Link to="/privacy" className="text-slate-400 hover:text-white">Privacy Policy</Link>
           </p>
         </motion.div>
       </div>

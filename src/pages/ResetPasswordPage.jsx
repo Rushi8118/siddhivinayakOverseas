@@ -107,7 +107,7 @@ export default function ResetPasswordPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       placeholder="Min. 6 characters"
-                      className="input-glass pl-12"
+                      className="input-glass !pl-12"
                     />
                   </div>
                 </div>
@@ -123,7 +123,7 @@ export default function ResetPasswordPage() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       placeholder="Repeat new password"
-                      className="input-glass pl-12"
+                      className="input-glass !pl-12"
                     />
                   </div>
                 </div>

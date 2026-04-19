@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { CheckCircle, Briefcase, GraduationCap, Globe, Clock, DollarSign, Users, ArrowRight, MessageCircle } from 'lucide-react'
+import SEO from '../components/SEO'
 
 const countryData = {
   canada: {
@@ -140,6 +141,87 @@ const countryData = {
       { title: 'STEM OPT Extension', desc: 'F-1 students in STEM fields get 3 years of OPT, providing time to transition to H-1B.' },
     ],
   },
+  'new-zealand': {
+    name: 'New Zealand',
+    flag: '🇳🇿',
+    tagline: 'Clean, Green & Full of Opportunity',
+    description: 'New Zealand is a top destination for skilled migrants seeking an exceptional quality of life, breathtaking landscapes, and a welcoming culture. The immigration system is straightforward and transparent.',
+    gradient: 'from-black/30 to-teal-800/20',
+    stats: [
+      { label: 'Annual Immigrants', value: '60K+' },
+      { label: 'Min. Wage', value: '$22.70/hr NZD' },
+      { label: 'Quality of Life', value: 'Top 15' },
+      { label: 'Avg. Salary', value: '$65K NZD' },
+    ],
+    visaTypes: [
+      { name: 'Skilled Migrant Category', type: 'Permanent Residency', time: '6-12 months', points: '100+ points', color: 'badge-gold' },
+      { name: 'Accredited Employer Work Visa', type: 'Temporary Work', time: '5-10 weeks', points: 'Job offer required', color: 'badge-teal' },
+      { name: 'Student Visa', type: 'Study', time: '3-6 weeks', points: 'IELTS 5.5+', color: 'badge-purple' },
+      { name: 'Working Holiday Visa', type: 'Work & Travel', time: '2-4 weeks', points: '18-30 years old', color: 'badge-gold' },
+      { name: 'Family Category Visa', type: 'Family Reunification', time: '6-18 months', points: 'NZ resident sponsor', color: 'badge-teal' },
+    ],
+    topJobs: ['Registered Nurse', 'Software Engineer', 'Civil Engineer', 'Chef', 'Teacher', 'Electrician'],
+    requirements: ['Valid passport', 'English language proof (IELTS)', 'Skills assessment (for SMC)', 'Job offer (for work visas)', 'Health examination', 'Character clearance', 'Proof of funds'],
+    pathways: [
+      { title: 'Skilled Migrant Category', desc: 'Points-based residence for skilled workers with NZ job offers, qualifications, or work experience.' },
+      { title: 'Accredited Employer Work Visa', desc: 'Work in NZ with an accredited employer — a stepping stone to permanent residency.' },
+      { title: 'Resident Visa', desc: 'After holding a work visa for 2+ years, many applicants become eligible to apply for permanent residency.' },
+    ],
+  },
+  europe: {
+    name: 'Europe',
+    flag: '🇪🇺',
+    tagline: 'Countless Countries, Endless Opportunities',
+    description: 'Europe offers diverse immigration pathways across Germany, France, Netherlands, and more. With the EU Blue Card and country-specific programs, skilled professionals have more options than ever before.',
+    gradient: 'from-blue-700/30 to-yellow-600/20',
+    stats: [
+      { label: 'EU Countries', value: '27' },
+      { label: 'Skilled Demand', value: '800K+/yr' },
+      { label: 'Free Movement', value: 'After PR' },
+      { label: 'Avg. EU Salary', value: '€45K+' },
+    ],
+    visaTypes: [
+      { name: 'EU Blue Card', type: 'Skilled Work (EU)', time: '1-3 months', points: 'Degree + €58K salary', color: 'badge-gold' },
+      { name: 'Germany Opportunity Card', type: 'Job Seeker', time: '4-8 weeks', points: '6+ points', color: 'badge-teal' },
+      { name: 'Netherlands Highly Skilled Migrant', type: 'Work Permit', time: '2-4 weeks', points: 'Salary threshold', color: 'badge-purple' },
+      { name: 'France Talent Passport', type: 'Skilled Work', time: '1-3 months', points: 'Degree + job offer', color: 'badge-gold' },
+      { name: 'Schengen Student Visa', type: 'Study', time: '4-8 weeks', points: 'University admission', color: 'badge-teal' },
+    ],
+    topJobs: ['Software Developer', 'Mechanical Engineer', 'Doctor', 'Nurse', 'Data Scientist', 'Researcher'],
+    requirements: ['Valid passport', 'Recognised degree/qualification', 'Job offer (for most visas)', 'Language proficiency (varies by country)', 'Health insurance', 'Proof of funds', 'Police clearance'],
+    pathways: [
+      { title: 'EU Blue Card', desc: 'The fastest pan-European work permit for highly qualified non-EU professionals across most EU member states.' },
+      { title: 'Country-Specific Programs', desc: 'Germany, Netherlands, France, and others each have dedicated skilled worker programs with unique advantages.' },
+      { title: 'Permanent Residence', desc: 'After 5 years of legal residence (2 in some countries), you may apply for permanent EU settlement.' },
+    ],
+  },
+  other: {
+    name: 'Other Countries',
+    flag: '🌍',
+    tagline: 'Explore Global Opportunities',
+    description: 'Beyond our main destinations, SiddhivinayakOverseas assists clients with immigration to Singapore, UAE, Malaysia, Japan, and many other countries worldwide. Contact us for a custom consultation.',
+    gradient: 'from-purple-700/30 to-teal-700/20',
+    stats: [
+      { label: 'Countries Covered', value: '45+' },
+      { label: 'Success Rate', value: '97%' },
+      { label: 'Years Experience', value: '10+' },
+      { label: 'Happy Clients', value: '5000+' },
+    ],
+    visaTypes: [
+      { name: 'Singapore Employment Pass', type: 'Skilled Work', time: '3-8 weeks', points: 'Degree + S$5K salary', color: 'badge-gold' },
+      { name: 'UAE Golden Visa', type: 'Long-Term Residency', time: '4-8 weeks', points: 'Investment / Talent', color: 'badge-teal' },
+      { name: 'Malaysia MM2H', type: 'Long Stay', time: '3-6 months', points: 'Retirement/Investment', color: 'badge-purple' },
+      { name: 'Japan Highly Skilled Professional', type: 'Work Visa', time: '1-3 months', points: 'Points-based system', color: 'badge-gold' },
+      { name: 'Custom Country Visa', type: 'Contact Us', time: 'Varies', points: 'Enquire for details', color: 'badge-teal' },
+    ],
+    topJobs: ['IT Professional', 'Engineer', 'Finance Expert', 'Healthcare Worker', 'Teacher', 'Hospitality Manager'],
+    requirements: ['Valid passport', 'Educational qualifications', 'Work experience proof', 'Language proficiency (varies)', 'Health examination', 'Police clearance', 'Proof of funds'],
+    pathways: [
+      { title: 'Country Assessment', desc: 'We assess your profile and recommend the best country and visa pathway based on your skills and goals.' },
+      { title: 'Documentation Support', desc: 'End-to-end document preparation and submission for your chosen destination country.' },
+      { title: 'Free Consultation', desc: 'Book a free consultation with our experts to explore options for any country not listed above.' },
+    ],
+  },
 }
 
 export default function CountryPage() {
@@ -150,13 +232,17 @@ export default function CountryPage() {
     return (
       <div className="min-h-screen bg-navy-950 pt-32 text-center">
         <h1 className="text-white text-3xl font-bold">Country not found</h1>
-        <p className="text-slate-400 mt-2">Available: canada, australia, germany, uk, usa</p>
+        <p className="text-slate-400 mt-2">Available: canada, australia, new-zealand, uk, europe, other</p>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-navy-950 pt-20">
+      <SEO 
+        title={`Immigrate to ${data.name} | Siddhivinayak Overseas`}
+        description={data.description}
+      />
       {/* Hero */}
       <section className={`hero-bg py-20 relative overflow-hidden`}>
         <div className="dot-pattern absolute inset-0 opacity-20" />
@@ -201,9 +287,9 @@ export default function CountryPage() {
                   <div className="flex gap-2 text-slate-400"><Clock size={13} className="text-gold-400 mt-0.5" /><span>{v.time}</span></div>
                   <div className="flex gap-2 text-slate-400"><CheckCircle size={13} className="text-teal-400 mt-0.5" /><span>{v.points}</span></div>
                 </div>
-                <button className="btn-primary text-xs px-4 py-2 mt-4 flex items-center gap-1.5">
+                <Link to="/apply" className="btn-primary text-xs px-4 py-2 mt-4 inline-flex items-center gap-1.5">
                   Apply Now <ArrowRight size={13} />
-                </button>
+                </Link>
               </motion.div>
             ))}
           </div>
@@ -266,8 +352,8 @@ export default function CountryPage() {
             <h3 className="font-display text-3xl font-bold text-white mb-3">Ready to Move to {data.name}?</h3>
             <p className="text-slate-400 mb-6">Get a free assessment of your eligibility and start your immigration journey today.</p>
             <div className="flex gap-4 justify-center">
-              <button className="btn-primary flex items-center gap-2">Free Assessment <ArrowRight size={16} /></button>
-              <a href="https://wa.me/18005558472" target="_blank" rel="noopener noreferrer">
+              <Link to="/contact" className="btn-primary flex items-center gap-2">Free Assessment <ArrowRight size={16} /></Link>
+              <a href="https://wa.me/919925064666" target="_blank" rel="noopener noreferrer">
                 <button className="btn-outline flex items-center gap-2"><MessageCircle size={15} /> Chat with Expert</button>
               </a>
             </div>

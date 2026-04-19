@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Briefcase, FileText, Clock, CheckCircle, Users, Award, Globe } from 'lucide-react'
+import SEO from '../components/SEO'
 
 function ProcessStep({ step, title, desc, icon: Icon }) {
   return (
@@ -27,6 +28,11 @@ function ProcessStep({ step, title, desc, icon: Icon }) {
 export default function WorkPermitPage() {
   return (
     <div className="bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950">
+      <SEO 
+        title="Work Permit Visa Services" 
+        description="Expert assistance for securing work permits and employment visas in Canada, Australia, UK, and more. Full documentation support and eligibility assessment."
+        keywords="work permit, employment visa, job visa, Canada work permit, Australia skilled worker visa, UK work visa"
+      />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4">
         <motion.div

@@ -1,18 +1,103 @@
 import { motion } from 'framer-motion'
-import { FileText, Upload, Clock, CheckCircle } from 'lucide-react'
+import { FileText, Phone, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { createApplication } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { COUNTRY_CODES, detectCountryCode } from '../data/countryCodes'
+
+
+
+// Reusable phone input with real-time country code auto-detection
+function PhoneInput({ label, icon: Icon, codeKey, numberKey, formData, setFormData }) {
+  const [detected, setDetected] = useState(null)
+
+  const handleNumberChange = (e) => {
+    const value = e.target.value
+    const det = detectCountryCode(value)
+    if (det) {
+      setFormData(prev => ({ ...prev, [codeKey]: det.code, [numberKey]: det.number }))
+      setDetected(det)
+      // Clear the badge after 3 seconds
+      setTimeout(() => setDetected(null), 3000)
+    } else {
+      setFormData(prev => ({ ...prev, [numberKey]: value }))
+      setDetected(null)
+    }
+  }
+
+  // Find flag for current selected code
+  const currentFlag = COUNTRY_CODES.find(c => c.code === formData[codeKey])?.flag || ''
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-white flex items-center gap-2 text-sm font-medium">
+          <Icon className="w-4 h-4 text-gold-400" />
+          {label}
+        </label>
+        {detected && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '4px',
+            fontSize: '11px', color: '#4ade80',
+            background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+            borderRadius: '9999px', padding: '2px 8px', animation: 'fadeIn 0.3s ease'
+          }}>
+            ✓ Detected {detected.flag} {detected.name}
+          </span>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <select
+          name={codeKey}
+          value={formData[codeKey]}
+          onChange={e => setFormData(prev => ({ ...prev, [codeKey]: e.target.value }))}
+          className="input-field text-white bg-navy-900 shrink-0"
+          style={{ width: '130px' }}
+        >
+          {COUNTRY_CODES.map((c, i) => (
+            <option key={i} value={c.code} className="text-white bg-navy-900">
+              {c.flag} {c.code} {c.name}
+            </option>
+          ))}
+        </select>
+        <input
+          type="tel"
+          name={numberKey}
+          value={formData[numberKey]}
+          onChange={handleNumberChange}
+          required
+          placeholder={`e.g. ${formData[codeKey]} 9876543210`}
+          className="input-field"
+          style={{ flex: 1, minWidth: 0 }}
+        />
+      </div>
+    </div>
+  )
+}
 
 export default function ApplicationPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error('Please log in to submit an application')
+      navigate('/login?redirect=/apply')
+    }
+  }, [user, authLoading, navigate])
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    phoneCode: '+91',
     phone: '',
+    whatsappCode: '+91',
+    whatsapp: '',
     service: '',
-    country: '',
+    countryMain: '',
+    countrySpecific: '',
     message: ''
   })
   const [loading, setLoading] = useState(false)
@@ -24,21 +109,28 @@ export default function ApplicationPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!user) {
       toast.error('Please log in to submit an application')
+      navigate('/login')
       return
     }
 
     setLoading(true)
     try {
+      // Build final country value
+      const countryValue = (formData.countryMain === 'Europe' || formData.countryMain === 'Other')
+        ? `${formData.countryMain} - ${formData.countrySpecific}`
+        : formData.countryMain
+
       const applicationData = {
         user_id: user.id,
         full_name: formData.fullName,
         email: formData.email,
-        phone: formData.phone,
+        phone: `${formData.phoneCode} ${formData.phone}`,
+        whatsapp: `${formData.whatsappCode} ${formData.whatsapp}`,
         service: formData.service,
-        country: formData.country,
+        country: countryValue,
         message: formData.message,
         status: 'pending'
       }
@@ -48,7 +140,12 @@ export default function ApplicationPage() {
       if (error) throw error
 
       toast.success('Application submitted successfully!')
-      setFormData({ fullName: '', email: '', phone: '', service: '', country: '', message: '' })
+      setFormData({
+        fullName: '', email: '',
+        phoneCode: '+91', phone: '',
+        whatsappCode: '+91', whatsapp: '',
+        service: '', countryMain: '', countrySpecific: '', message: ''
+      })
     } catch (error) {
       console.error('Submission error:', error)
       toast.error(error.message || 'Failed to submit application')
@@ -76,6 +173,7 @@ export default function ApplicationPage() {
           onSubmit={handleSubmit}
           className="bg-white/5 border border-white/10 rounded-xl p-8 space-y-6"
         >
+          {/* Full Name & Email */}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="text-white mb-2 block text-sm font-medium">Full Name</label>
@@ -103,49 +201,87 @@ export default function ApplicationPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-white mb-2 block text-sm font-medium">Phone</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                placeholder="+1 (555) 000-0000"
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="text-white mb-2 block text-sm font-medium">Service</label>
-              <select
-                name="service"
-                value={formData.service}
-                onChange={handleChange}
-                required
-                className="input-field"
-              >
-                <option value="">Select Service</option>
-                <option value="work-permit">Work Permit</option>
-                <option value="study-visa">Study Visa</option>
-                <option value="job-assistance">Job Assistance</option>
-              </select>
-            </div>
-          </div>
+          {/* Phone Number */}
+          <PhoneInput
+            label="Phone Number"
+            icon={Phone}
+            codeKey="phoneCode"
+            numberKey="phone"
+            formData={formData}
+            setFormData={setFormData}
+          />
 
+          {/* WhatsApp Number */}
+          <PhoneInput
+            label="WhatsApp Number"
+            icon={MessageCircle}
+            codeKey="whatsappCode"
+            numberKey="whatsapp"
+            formData={formData}
+            setFormData={setFormData}
+          />
+
+          {/* Service */}
           <div>
-            <label className="text-white mb-2 block text-sm font-medium">Destination Country</label>
-            <input
-              type="text"
-              name="country"
-              value={formData.country}
+            <label className="text-white mb-2 block text-sm font-medium">Service</label>
+            <select
+              name="service"
+              value={formData.service}
               onChange={handleChange}
               required
-              placeholder="Canada"
-              className="input-field"
-            />
+              className="input-field text-white bg-navy-900"
+            >
+              <option value="" className="text-slate-400 bg-navy-900">Select Service</option>
+              <option value="work-permit" className="text-white bg-navy-900">Work Permit</option>
+              <option value="study-visa" className="text-white bg-navy-900">Study Visa</option>
+              {/* <option value="job-assistance" className="text-white bg-navy-900">Job Assistance</option> */}
+            </select>
           </div>
 
+          {/* Destination Country */}
+          <div className="space-y-3">
+            <label className="text-white mb-2 block text-sm font-medium">Destination Country</label>
+            <select
+              name="countryMain"
+              value={formData.countryMain}
+              onChange={handleChange}
+              required
+              className="input-field text-white bg-navy-900"
+            >
+              <option value="" className="text-slate-400 bg-navy-900">Select a country</option>
+              <option value="Australia" className="text-white bg-navy-900">🇦🇺 Australia</option>
+              <option value="New Zealand" className="text-white bg-navy-900">🇳🇿 New Zealand</option>
+              <option value="United Kingdom" className="text-white bg-navy-900">🇬🇧 United Kingdom</option>
+              <option value="Canada" className="text-white bg-navy-900">🇨🇦 Canada</option>
+              <option value="Europe" className="text-white bg-navy-900">🇪🇺 Europe (specify below)</option>
+              <option value="Other" className="text-white bg-navy-900">🌍 Other (specify below)</option>
+            </select>
+
+            {/* Show specific country input when Europe or Other is selected */}
+            {(formData.countryMain === 'Europe' || formData.countryMain === 'Other') && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <input
+                  type="text"
+                  name="countrySpecific"
+                  value={formData.countrySpecific}
+                  onChange={handleChange}
+                  required
+                  placeholder={
+                    formData.countryMain === 'Europe'
+                      ? 'e.g. Germany, France, Netherlands…'
+                      : 'Please enter the country name'
+                  }
+                  className="input-field"
+                />
+              </motion.div>
+            )}
+          </div>
+
+          {/* Message */}
           <div>
             <label className="text-white mb-2 block text-sm font-medium">Message</label>
             <textarea

@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { Users, FileText, TrendingUp, Shield, Settings, LayoutDashboard } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 const metrics = [
   { label: 'Total Users', value: '12,480', change: '+5.2%', icon: Users, color: 'from-royal-500 to-teal-500' },
@@ -16,6 +19,26 @@ const recent = [
 ]
 
 export default function AdminPage() {
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        navigate('/login')
+      } else if (user.email !== 'admin@siddhivinayakoverseas.com') {
+        toast.error('Access denied. Admin privileges required.')
+        navigate('/dashboard')
+      }
+    }
+  }, [user, loading, navigate])
+
+  if (loading) return (
+    <div className="min-h-screen bg-navy-950 flex items-center justify-center">
+      <div className="text-slate-400">Loading...</div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-navy-950">
       <div className="border-b border-white/5 bg-gradient-to-b from-navy-900/60 to-transparent">

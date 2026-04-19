@@ -1,24 +1,27 @@
 import { motion } from 'framer-motion'
 import { Mail, Phone, MapPin, Send, Clock, MessageCircle, Globe, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useInView } from 'react-intersection-observer'
+import SEO from '../components/SEO'
+import { submitConsultation } from '../lib/supabaseClient'
+import { COUNTRY_CODES, detectCountryCode } from '../data/countryCodes'
 
 const contactMethods = [
   {
     icon: Mail,
     title: 'Email Us',
-    value: 'support@globalvisa.com',
+    value: 'info@siddhivinayakoverseas.com',
     desc: 'We respond within 2 hours',
-    href: 'mailto:support@globalvisa.com',
+    href: 'mailto:info@siddhivinayakoverseas.com',
     gradient: 'from-royal-500 to-royal-600',
   },
   {
     icon: Phone,
     title: 'Call Us',
-    value: '+1 (800) 555-VISA',
-    desc: 'Mon-Fri, 9AM - 6PM EST',
-    href: 'tel:+18005558472',
+    value: '+91 99250 64666',
+    desc: 'Mon-Sat, 9AM - 7PM IST',
+    href: 'tel:+919925064666',
     gradient: 'from-teal-500 to-teal-600',
   },
   {
@@ -26,24 +29,21 @@ const contactMethods = [
     title: 'WhatsApp',
     value: 'Chat with us',
     desc: 'Available 24/7',
-    href: 'https://wa.me/18005558472',
+    href: 'https://wa.me/919925064666',
     gradient: 'from-green-500 to-green-600',
   },
   {
     icon: MapPin,
     title: 'Visit Us',
-    value: '123 Immigration Tower',
-    desc: 'Toronto, Canada M5H 2N2',
-    href: 'https://maps.google.com',
+    value: 'Pragati IT Park',
+    desc: 'Yogi Chowk, Surat, Gujarat',
+    href: 'https://www.google.com/maps/search/?api=1&query=Pragati+IT+Park+Yogi+Chowk+Surat+Gujarat',
     gradient: 'from-gold-500 to-gold-600',
   },
 ]
 
 const offices = [
-  { city: 'Toronto', country: 'Canada', timezone: 'EST', flag: '\u{1F1E8}\u{1F1E6}' },
-  { city: 'London', country: 'UK', timezone: 'GMT', flag: '\u{1F1EC}\u{1F1E7}' },
-  { city: 'Sydney', country: 'Australia', timezone: 'AEST', flag: '\u{1F1E6}\u{1F1FA}' },
-  { city: 'Dubai', country: 'UAE', timezone: 'GST', flag: '\u{1F1E6}\u{1F1EA}' },
+  { city: 'Surat', country: 'India', timezone: 'IST', flag: '\u{1F1EE}\u{1F1F3}' },
 ]
 
 function AnimatedSection({ children, className = '', delay = 0 }) {
@@ -66,12 +66,17 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phoneCode: '+91',
     phone: '',
+    whatsappCode: '+91',
+    whatsapp: '',
     service: '',
     country: '',
     message: ''
   })
   const [loading, setLoading] = useState(false)
+  const [phoneDetected, setPhoneDetected] = useState(null)
+  const [waDetected, setWaDetected] = useState(null)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -82,11 +87,25 @@ export default function ContactPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const { error } = await submitConsultation({
+        name: formData.name,
+        email: formData.email,
+        phone: `${formData.phoneCode} ${formData.phone}`,
+        whatsapp: `${formData.whatsappCode} ${formData.whatsapp}`,
+        service_type: formData.service,
+        country: formData.country,
+        message: formData.message
+      })
+      if (error) throw error
       toast.success('Message sent successfully! We\'ll get back to you within 2 hours.')
-      setFormData({ name: '', email: '', phone: '', service: '', country: '', message: '' })
+      setFormData({
+        name: '', email: '',
+        phoneCode: '+91', phone: '',
+        whatsappCode: '+91', whatsapp: '',
+        service: '', country: '', message: ''
+      })
     } catch (error) {
-      toast.error('Failed to send message')
+      toast.error(error.message || 'Failed to send message')
     } finally {
       setLoading(false)
     }
@@ -94,6 +113,11 @@ export default function ContactPage() {
 
   return (
     <div className="bg-navy-950 min-h-screen">
+      <SEO 
+        title="Contact Us" 
+        description="Get in touch with our expert immigration consultants. We offer 24/7 support for all your visa and immigration queries."
+        keywords="contact immigration consultant, visa help, immigration support, Surat visa consultancy"
+      />
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0 hero-bg" />
@@ -184,57 +208,141 @@ export default function ContactPage() {
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="phone" className="label">Phone Number</label>
+                  {/* Phone Number with country code */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <label className="label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Phone size={13} className="text-royal-400" /> Phone Number
+                      </label>
+                      {phoneDetected && (
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          fontSize: '11px', color: '#4ade80',
+                          background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+                          borderRadius: '9999px', padding: '2px 8px'
+                        }}>✓ Detected {phoneDetected.flag} {phoneDetected.name}</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select
+                        style={{ width: '120px', flexShrink: 0 }}
+                        className="input-glass text-white bg-navy-900"
+                        value={formData.phoneCode}
+                        onChange={e => setFormData(prev => ({ ...prev, phoneCode: e.target.value }))}
+                      >
+                        {COUNTRY_CODES.map((c, i) => (
+                          <option key={i} value={c.code} className="text-white bg-navy-900">
+                            {c.flag} {c.code} {c.name}
+                          </option>
+                        ))}
+                      </select>
                       <input
                         type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+1 234 567 890"
+                        style={{ flex: 1, minWidth: 0 }}
                         className="input-glass"
+                        placeholder={`e.g. ${formData.phoneCode} 9876543210`}
+                        value={formData.phone}
+                        onChange={e => {
+                          const val = e.target.value
+                          const det = detectCountryCode(val)
+                          if (det) {
+                            setFormData(prev => ({ ...prev, phoneCode: det.code, phone: det.number }))
+                            setPhoneDetected(det)
+                            setTimeout(() => setPhoneDetected(null), 3000)
+                          } else {
+                            setFormData(prev => ({ ...prev, phone: val }))
+                            setPhoneDetected(null)
+                          }
+                        }}
                       />
                     </div>
-                    <div>
-                      <label htmlFor="service" className="label">Service Needed</label>
-                      <select
-                        id="service"
-                        name="service"
-                        value={formData.service}
-                        onChange={handleChange}
-                        required
-                        className="input-glass"
-                      >
-                        <option value="">Select service...</option>
-                        <option value="work-permit">Work Permit</option>
-                        <option value="study-visa">Study Visa</option>
-                        <option value="immigration">Immigration / PR</option>
-                        <option value="job-assistance">Job Assistance</option>
-                        <option value="other">Other</option>
-                      </select>
+                  </div>
+
+                  {/* WhatsApp Number with country code */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <label className="label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <MessageCircle size={13} className="text-green-400" /> WhatsApp Number
+                      </label>
+                      {waDetected && (
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          fontSize: '11px', color: '#4ade80',
+                          background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+                          borderRadius: '9999px', padding: '2px 8px'
+                        }}>✓ Detected {waDetected.flag} {waDetected.name}</span>
+                      )}
                     </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select
+                        style={{ width: '120px', flexShrink: 0 }}
+                        className="input-glass text-white bg-navy-900"
+                        value={formData.whatsappCode}
+                        onChange={e => setFormData(prev => ({ ...prev, whatsappCode: e.target.value }))}
+                      >
+                        {COUNTRY_CODES.map((c, i) => (
+                          <option key={i} value={c.code} className="text-white bg-navy-900">
+                            {c.flag} {c.code} {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="tel"
+                        style={{ flex: 1, minWidth: 0 }}
+                        className="input-glass"
+                        placeholder={`e.g. ${formData.whatsappCode} 9876543210`}
+                        value={formData.whatsapp}
+                        onChange={e => {
+                          const val = e.target.value
+                          const det = detectCountryCode(val)
+                          if (det) {
+                            setFormData(prev => ({ ...prev, whatsappCode: det.code, whatsapp: det.number }))
+                            setWaDetected(det)
+                            setTimeout(() => setWaDetected(null), 3000)
+                          } else {
+                            setFormData(prev => ({ ...prev, whatsapp: val }))
+                            setWaDetected(null)
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="service" className="label">Service Needed</label>
+                    <select
+                      id="service"
+                      name="service"
+                      value={formData.service}
+                      onChange={handleChange}
+                      required
+                      className="input-glass text-white bg-navy-900"
+                    >
+                      <option value="" className="text-slate-400 bg-navy-900">Select service...</option>
+                      <option value="work-permit" className="text-white bg-navy-900">Work Permit</option>
+                      <option value="study-visa" className="text-white bg-navy-900">Study Visa</option>
+                      <option value="other" className="text-white bg-navy-900">Other</option>
+                    </select>
                   </div>
 
                   <div>
                     <label htmlFor="country" className="label">Preferred Country</label>
                     <select
-                      id="country"
-                      name="country"
-                      value={formData.country}
-                      onChange={handleChange}
-                      required
-                      className="input-glass"
-                    >
-                      <option value="">Select country...</option>
-                      <option value="canada">Canada</option>
-                      <option value="australia">Australia</option>
-                      <option value="germany">Germany</option>
-                      <option value="uk">United Kingdom</option>
-                      <option value="usa">USA</option>
-                      <option value="other">Other</option>
-                    </select>
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    required
+                    className="input-glass text-white bg-navy-900"
+                  >
+                    <option value="" className="text-slate-400 bg-navy-900">Select country...</option>
+                    <option value="canada" className="text-white bg-navy-900">Canada</option>
+                    <option value="australia" className="text-white bg-navy-900">Australia</option>
+                    <option value="germany" className="text-white bg-navy-900">Germany</option>
+                    <option value="uk" className="text-white bg-navy-900">United Kingdom</option>
+                    <option value="usa" className="text-white bg-navy-900">USA</option>
+                    <option value="other" className="text-white bg-navy-900">Other</option>
+                  </select>
                   </div>
 
                   <div>
@@ -301,7 +409,7 @@ export default function ContactPage() {
                     <Clock size={18} className="text-royal-400" />
                     <h3 className="text-xl font-bold text-white">Our Global Offices</h3>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {offices.map((office) => (
                       <div key={office.city} className="p-3 rounded-xl bg-white/3 border border-white/5">
                         <div className="flex items-center gap-2 mb-1">
@@ -333,7 +441,7 @@ export default function ContactPage() {
                   </div>
                   <div className="mt-4 pt-4 border-t border-white/5">
                     <p className="text-xs text-slate-500">
-                      All times are in Eastern Standard Time (EST). 
+                      All times are in Indian Standard Time (IST). 
                       WhatsApp support is available 24/7.
                     </p>
                   </div>
@@ -349,13 +457,13 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">Find Us</h2>
-            <p className="text-slate-400">Visit our head office in Toronto, Canada</p>
+            <p className="text-slate-400">Visit our head office in Surat, Gujarat </p>
           </AnimatedSection>
           
           <AnimatedSection delay={0.1}>
             <div className="glass-card rounded-2xl overflow-hidden h-[400px]">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2886.4360456073814!2d-79.38320492346097!3d43.65322917110163!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x882b34d68bf33a9b%3A0x15edd8c4de1c7581!2sToronto%2C%20ON%2C%20Canada!5e0!3m2!1sen!2sus!4v1704067200000!5m2!1sen!2sus"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3720.0123456789!2d72.889501!3d21.226834!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be04f4340798e3b%3A0xc3f8e58319a92444!2sPragati%20IT%20Park!5e0!3m2!1sen!2sin!4v1713500000000!5m2!1sen!2sin"
                 width="100%"
                 height="100%"
                 style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg)' }}
