@@ -640,3 +640,57 @@ h1, h2, h3, h4, h5, h6, .font-display {
     scroll-behavior: auto !important;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   LEGACY THEME COMPATIBILITY LAYER
+   ----------------------------------------------------------------------
+   Inner pages (Services, Country, Contact, Auth, etc.) were authored with
+   a dark navy palette. The new brand is light sky-blue + gold. Rather
+   than rewriting 20 files, we remap dark backgrounds to the light theme
+   here. Text-on-navy classes remain untouched (text-navy-900 is still
+   valid as dark text on light surface).
+   ────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Page-level dark backgrounds → brand light */
+  .bg-navy-950 { background-color: var(--color-background) !important; color: var(--color-foreground); }
+  .bg-navy-900 { background-color: #EAF4FB !important; color: var(--color-foreground); }
+  .bg-navy-800 { background-color: #F0F6FB !important; color: var(--color-foreground); }
+  .bg-slate-950 { background-color: var(--color-background) !important; color: var(--color-foreground); }
+  .bg-slate-900 { background-color: #F2F7FC !important; color: var(--color-foreground); }
+  .bg-slate-800 { background-color: #F6F9FC !important; color: var(--color-foreground); }
+
+  /* Gradients originally dark → light brand gradient */
+  .from-navy-950 { --tw-gradient-from: #FFFFFF var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+  .from-navy-900 { --tw-gradient-from: #F5F9FC var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(245 249 252 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+  .via-navy-900  { --tw-gradient-to: rgb(245 249 252 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), #F5F9FC var(--tw-gradient-via-position), var(--tw-gradient-to) !important; }
+  .to-navy-950   { --tw-gradient-to: #FFFFFF var(--tw-gradient-to-position) !important; }
+  .to-navy-900   { --tw-gradient-to: #F5F9FC var(--tw-gradient-to-position) !important; }
+
+  /* Muted text that was designed for dark bg → dark-enough text for light bg */
+  .text-slate-300, .text-slate-400, .text-slate-500 { color: #5C7A95 !important; }
+  .text-white\/60, .text-white\/70, .text-white\/80, .text-white\/90 { color: #334155 !important; }
+
+  /* When plain .text-white sits on a newly-lightened surface it's unreadable.
+     We scope this only to the remapped dark containers so buttons keep white text. */
+  .bg-navy-950 > .text-white,
+  .bg-navy-900 > .text-white,
+  .bg-slate-900 > .text-white,
+  .bg-white\/5 .text-white,
+  .bg-white\/10 .text-white {
+    color: #0F2A44 !important;
+  }
+
+  /* White/5 and white/10 glass surfaces → light card */
+  .bg-white\/5  { background-color: rgba(255, 255, 255, 0.85) !important; border: 1px solid rgba(58, 155, 203, 0.18); }
+  .bg-white\/10 { background-color: rgba(255, 255, 255, 0.92) !important; border: 1px solid rgba(58, 155, 203, 0.22); }
+  .border-white\/5, .border-white\/10, .border-white\/20 { border-color: rgba(58, 155, 203, 0.22) !important; }
+
+  /* Ensure form inputs on dark-authored pages remain legible */
+  .bg-navy-950 input, .bg-navy-900 input,
+  .bg-navy-950 textarea, .bg-navy-900 textarea,
+  .bg-navy-950 select, .bg-navy-900 select {
+    background-color: #FFFFFF !important;
+    color: #0F2A44 !important;
+    border-color: rgba(58, 155, 203, 0.3) !important;
+  }
+}

@@ -233,7 +233,8 @@ export default function Navbar() {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-navy-900/30 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 backdrop-blur-sm lg:hidden"
+              style={{ background: 'rgba(15, 42, 68, 0.35)' }}
               onClick={() => setMobileOpen(false)}
             />
             <motion.div

@@ -92,11 +92,11 @@ function AppContent() {
             <Route path="/sitemap" element={<PageWrapper><SitemapPage /></PageWrapper>} />
             <Route path="*" element={
               <PageWrapper>
-                <div className="min-h-screen bg-navy-950 flex items-center justify-center text-center px-4">
+                <div className="min-h-screen bg-gradient-to-b from-white via-sky-50 to-white flex items-center justify-center text-center px-4">
                   <div>
                     <div className="text-8xl font-display font-bold gradient-text mb-4">404</div>
-                    <h2 className="text-white text-2xl font-bold mb-2">Page Not Found</h2>
-                    <p className="text-slate-400 mb-6">The page you're looking for doesn't exist.</p>
+                    <h2 className="text-navy-900 text-2xl font-bold mb-2">Page Not Found</h2>
+                    <p className="text-navy-700/70 mb-6">The page you&apos;re looking for doesn&apos;t exist.</p>
                     <a href="/"><button className="btn-primary">Back to Home</button></a>
                   </div>
                 </div>
@@ -121,17 +121,19 @@ export default function App() {
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#1e1b4b',
-              color: '#f1f5f9',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '10px',
+              background: '#FFFFFF',
+              color: '#0F2A44',
+              border: '1px solid rgba(58, 155, 203, 0.25)',
+              borderRadius: '12px',
               fontSize: '14px',
+              boxShadow: '0 12px 40px rgba(15, 42, 68, 0.12)',
+              fontWeight: 500,
             },
             success: {
-              iconTheme: { primary: '#14b8a6', secondary: '#07061a' },
+              iconTheme: { primary: '#3A9BCB', secondary: '#FFFFFF' },
             },
             error: {
-              iconTheme: { primary: '#f43f5e', secondary: '#07061a' },
+              iconTheme: { primary: '#EF4444', secondary: '#FFFFFF' },
             },
           }}
         />
