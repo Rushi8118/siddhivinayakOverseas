@@ -422,7 +422,7 @@ export default function HomePage() {
       </section>
 
       {/* ========== COUNTRIES ========== */}
-      <section className="section-pad relative" aria-labelledby="countries-heading">
+      <section id="destinations" className="section-pad relative" aria-labelledby="countries-heading">
         <div className="absolute inset-0 mesh-gradient opacity-60 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <AnimatedSection className="text-center mb-16">
