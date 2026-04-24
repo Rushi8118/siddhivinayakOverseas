@@ -1,69 +1,40 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, ChevronDown, User, LogOut, Sparkles, FileText } from 'lucide-react'
+import { Menu, X, ChevronDown, User, LogOut, FileText, Phone, GraduationCap } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { signOut as supabaseSignOut } from '../lib/supabaseClient'
 
 const services = [
-  { name: 'Work Permit', path: '/services/work-permit', desc: 'International employment visas' },
-  { name: 'Study Visa', path: '/services/study-visa', desc: 'Student visa assistance' },
-  { name: 'Job Assistance', path: '/services/job-assistance', desc: 'Career placement abroad' },
+  { name: 'Study in UK',                  path: '/countries/uk',          desc: 'Top-ranked universities & 2-yr PSW' },
+  { name: 'Study in Germany',             path: '/countries/germany',     desc: 'Low tuition, strong job market' },
+  { name: 'Study in France',              path: '/countries/france',      desc: 'Business schools & 12-month APS' },
+  { name: 'UK Visa & COS Assistance',     path: '/services/study-visa',   desc: 'End-to-end visa filing & COS' },
+  { name: 'University Admissions',        path: '/programs',              desc: 'SOP, LOR & application support' },
 ]
 
 const countries = [
-  { name: 'Australia',      path: '/countries/australia',     flag: '🇦🇺' },
-  { name: 'New Zealand',    path: '/countries/new-zealand',   flag: '🇳🇿' },
-  { name: 'United Kingdom', path: '/countries/uk',            flag: '🇬🇧' },
-  { name: 'Canada',         path: '/countries/canada',        flag: '🇨🇦' },
-  { name: 'Europe',         path: '/countries/europe',        flag: '🇪🇺' },
-  { name: 'Other Countries',path: '/contact',                 flag: '🌍' },
+  { name: 'United Kingdom', path: '/countries/uk',      flag: '🇬🇧' },
+  { name: 'Germany',        path: '/countries/germany', flag: '🇩🇪' },
+  { name: 'France',         path: '/countries/france',  flag: '🇫🇷' },
 ]
 
-// Animation variants for smoother transitions
 const dropdownVariants = {
-  hidden: {
-    opacity: 0,
-    y: 8,
-    scale: 0.95,
-    transition: { duration: 0.15, ease: 'easeIn' }
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.2, ease: 'easeOut' }
-  },
-  exit: {
-    opacity: 0,
-    y: 8,
-    scale: 0.95,
-    transition: { duration: 0.15, ease: 'easeIn' }
-  }
+  hidden:  { opacity: 0, y: 8,  scale: 0.97, transition: { duration: 0.15, ease: 'easeIn' } },
+  visible: { opacity: 1, y: 0,  scale: 1,    transition: { duration: 0.2,  ease: 'easeOut' } },
+  exit:    { opacity: 0, y: 8,  scale: 0.97, transition: { duration: 0.15, ease: 'easeIn' } },
 }
 
 const mobileMenuVariants = {
-  hidden: {
-    opacity: 0,
-    x: '100%',
-    transition: { type: 'spring', damping: 30, stiffness: 300 }
-  },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { type: 'spring', damping: 25, stiffness: 200 }
-  },
-  exit: {
-    opacity: 0,
-    x: '100%',
-    transition: { type: 'spring', damping: 30, stiffness: 300 }
-  }
+  hidden:  { opacity: 0, x: '100%', transition: { type: 'spring', damping: 30, stiffness: 300 } },
+  visible: { opacity: 1, x: 0,      transition: { type: 'spring', damping: 25, stiffness: 200 } },
+  exit:    { opacity: 0, x: '100%', transition: { type: 'spring', damping: 30, stiffness: 300 } },
 }
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
+  const [scrolled, setScrolled]   = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [dropdown, setDropdown] = useState(null)
+  const [dropdown, setDropdown]   = useState(null)
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -79,16 +50,9 @@ export default function Navbar() {
     setDropdown(null)
   }, [location])
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
 
   const handleSignOut = async () => {
@@ -102,37 +66,39 @@ export default function Navbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="fixed top-0 left-0 right-0 z-50 py-4"
+        className="fixed top-0 left-0 right-0 z-50 py-3"
         style={{
-          background: scrolled ? 'rgba(15, 23, 42, 0.92)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(24px)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(24px)' : 'none',
-          boxShadow: scrolled ? '0 4px 30px rgba(0,0,0,0.5)' : 'none',
-          transition: 'background 0.4s ease, box-shadow 0.4s ease',
-          border: 'none',
+          background: scrolled ? 'rgba(240, 249, 255, 0.88)' : 'rgba(240, 249, 255, 0.35)',
+          backdropFilter: 'blur(22px)',
+          WebkitBackdropFilter: 'blur(22px)',
+          boxShadow: scrolled ? '0 8px 32px rgba(15, 42, 68, 0.10)' : 'none',
+          borderBottom: scrolled ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(255, 255, 255, 0.3)',
+          transition: 'background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease',
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
+            <Link to="/" className="flex items-center gap-3 group min-w-0">
               <motion.div
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, rotate: -4 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0"
-                style={{ background: '#0f172a' }}
+                className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 shadow-glow-gold bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center"
               >
-                <img src="/favicon.svg" alt="SiddhivinayakOverseas Logo" className="w-full h-full object-contain" />
+                <GraduationCap size={22} className="text-navy-900" strokeWidth={2.3} />
               </motion.div>
-              <div className="hidden sm:block">
-                <span className="text-lg font-bold text-white tracking-tight group-hover:text-royal-400 transition-colors">
-                  SiddhivinayakOverseas
-                </span>
+              <div className="hidden sm:block min-w-0">
+                <div className="font-display font-bold text-navy-900 leading-tight tracking-tight text-lg truncate group-hover:text-gold-600 transition-colors">
+                  Siddhivinayak
+                </div>
+                <div className="text-[10.5px] uppercase tracking-[0.18em] text-gold-600 font-semibold -mt-0.5">
+                  Overseas
+                </div>
               </div>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-1">
+            {/* Desktop Nav */}
+            <div className="hidden lg:flex items-center gap-0.5">
               <NavLink to="/">Home</NavLink>
 
               {/* Services Dropdown */}
@@ -141,36 +107,19 @@ export default function Navbar() {
                 onMouseEnter={() => setDropdown('services')}
                 onMouseLeave={() => setDropdown(null)}
               >
-                <button className="nav-link flex items-center gap-1.5 px-4 py-2">
+                <button className="nav-link flex items-center gap-1.5 px-3.5 py-2">
                   Services
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${dropdown === 'services' ? 'rotate-180' : ''}`}
-                  />
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${dropdown === 'services' ? 'rotate-180' : ''}`} />
                 </button>
                 <AnimatePresence>
                   {dropdown === 'services' && (
-                    <motion.div
-                      variants={dropdownVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      className="absolute top-full left-0 pt-2"
-                    >
-                      <div className="glass-dark rounded-2xl p-3 min-w-[240px] shadow-premium border border-white/5">
+                    <motion.div variants={dropdownVariants} initial="hidden" animate="visible" exit="exit" className="absolute top-full left-0 pt-2">
+                      <div className="rounded-2xl p-3 min-w-[280px] shadow-premium border border-white/70 bg-white/95 backdrop-blur-xl">
                         {services.map((s, i) => (
-                          <motion.div
-                            key={s.path}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                          >
-                            <Link
-                              to={s.path}
-                              className="flex flex-col px-4 py-3 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all group"
-                            >
-                              <span className="font-medium text-sm">{s.name}</span>
-                              <span className="text-xs text-slate-500 group-hover:text-slate-400">{s.desc}</span>
+                          <motion.div key={s.path} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                            <Link to={s.path} className="flex flex-col px-4 py-2.5 rounded-xl text-navy-800 hover:text-gold-700 hover:bg-gold-50 transition-all group">
+                              <span className="font-semibold text-sm">{s.name}</span>
+                              <span className="text-xs text-navy-700/65 group-hover:text-gold-600">{s.desc}</span>
                             </Link>
                           </motion.div>
                         ))}
@@ -186,34 +135,17 @@ export default function Navbar() {
                 onMouseEnter={() => setDropdown('countries')}
                 onMouseLeave={() => setDropdown(null)}
               >
-                <button className="nav-link flex items-center gap-1.5 px-4 py-2">
+                <button className="nav-link flex items-center gap-1.5 px-3.5 py-2">
                   Countries
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform duration-200 ${dropdown === 'countries' ? 'rotate-180' : ''}`}
-                  />
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${dropdown === 'countries' ? 'rotate-180' : ''}`} />
                 </button>
                 <AnimatePresence>
                   {dropdown === 'countries' && (
-                    <motion.div
-                      variants={dropdownVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      className="absolute top-full left-0 pt-2"
-                    >
-                      <div className="glass-dark rounded-2xl p-3 min-w-[200px] shadow-premium border border-white/5">
+                    <motion.div variants={dropdownVariants} initial="hidden" animate="visible" exit="exit" className="absolute top-full left-0 pt-2">
+                      <div className="rounded-2xl p-3 min-w-[220px] shadow-premium border border-white/70 bg-white/95 backdrop-blur-xl">
                         {countries.map((c, i) => (
-                          <motion.div
-                            key={c.path}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                          >
-                            <Link
-                              to={c.path}
-                              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all"
-                            >
+                          <motion.div key={c.path} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                            <Link to={c.path} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-navy-800 hover:text-gold-700 hover:bg-gold-50 transition-all">
                               <span className="text-lg">{c.flag}</span>
                               <span className="text-sm font-medium">{c.name}</span>
                             </Link>
@@ -226,15 +158,17 @@ export default function Navbar() {
               </div>
 
               <NavLink to="/programs">Programs</NavLink>
+              <NavLink to="/reviews">Reviews</NavLink>
               <NavLink to="/contact">Contact</NavLink>
+
               <Link
                 to="/apply"
-                className="relative ml-2 flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-teal-400 hover:text-teal-300 transition-colors group"
+                className="relative ml-2 flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-gold-700 hover:text-gold-800 transition-colors group"
               >
                 <FileText size={14} />
                 Apply Now
                 <motion.span
-                  className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-teal-500 to-royal-500 rounded-full origin-left"
+                  className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-gold-500 to-sky-500 rounded-full origin-left"
                   initial={{ scaleX: 0 }}
                   whileHover={{ scaleX: 1 }}
                   transition={{ duration: 0.25 }}
@@ -242,67 +176,48 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Right Side Actions */}
-            <div className="hidden lg:flex items-center gap-3">
+            {/* Right actions */}
+            <div className="hidden lg:flex items-center gap-2">
+              <a
+                href="tel:+919925064666"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-navy-800 hover:text-gold-700 hover:bg-gold-50 transition-all text-sm font-semibold"
+                aria-label="Call Siddhivinayak Overseas"
+              >
+                <Phone size={15} /> <span className="hidden xl:inline">+91 99250 64666</span>
+              </a>
               {user ? (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/dashboard"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
-                  >
+                <>
+                  <Link to="/dashboard" className="flex items-center gap-2 px-3 py-2 rounded-xl text-navy-800 hover:text-gold-700 hover:bg-gold-50 transition-all text-sm font-medium">
                     <User size={16} /> Dashboard
                   </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm font-medium"
-                  >
+                  <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 transition-all text-sm font-medium">
                     <LogOut size={16} /> Sign Out
                   </button>
-                </div>
-              ) : (
-                <>
-                  <Link to="/login" className="nav-link px-4 py-2">
-                    Login
-                  </Link>
-                  <Link to="/signup">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="btn-primary text-sm px-6 py-2.5 flex items-center gap-2"
-                    >
-                      <Sparkles size={14} />
-                      Get Started
-                    </motion.button>
-                  </Link>
                 </>
+              ) : (
+                <Link to="/signup">
+                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="btn-gold text-sm px-5 py-2.5">
+                    Get Started
+                  </motion.button>
+                </Link>
               )}
             </div>
 
-            {/* Mobile Menu Toggle */}
+            {/* Mobile toggle */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              className="lg:hidden w-10 h-10 rounded-xl glass flex items-center justify-center text-white"
+              className="lg:hidden w-11 h-11 rounded-xl bg-white/80 border border-white/90 flex items-center justify-center text-navy-900 shadow-soft"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
             >
               <AnimatePresence mode="wait">
                 {mobileOpen ? (
-                  <motion.div
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
                     <X size={22} />
                   </motion.div>
                 ) : (
-                  <motion.div
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
                     <Menu size={22} />
                   </motion.div>
                 )}
@@ -312,131 +227,76 @@ export default function Navbar() {
         </div>
       </motion.nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-navy-950/80 backdrop-blur-sm lg:hidden"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-navy-900/30 backdrop-blur-sm lg:hidden"
               onClick={() => setMobileOpen(false)}
             />
-
-            {/* Menu Panel */}
             <motion.div
-              variants={mobileMenuVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm glass-dark border-l border-white/5 lg:hidden overflow-y-auto"
+              variants={mobileMenuVariants} initial="hidden" animate="visible" exit="exit"
+              className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm bg-gradient-to-b from-sky-50 to-white border-l border-white/90 lg:hidden overflow-y-auto shadow-premium"
             >
               <div className="p-6 pt-24">
-                <div className="space-y-2">
-                  <MobileNavLink to="/" onClick={() => setMobileOpen(false)}>
-                    Home
-                  </MobileNavLink>
+                <div className="space-y-1">
+                  <MobileNavLink to="/" onClick={() => setMobileOpen(false)}>Home</MobileNavLink>
 
-                  {/* Services Section */}
                   <div className="pt-4">
-                    <div className="text-xs font-semibold text-royal-400 uppercase tracking-widest mb-3 px-3">
-                      Services
-                    </div>
+                    <div className="text-[11px] font-bold text-gold-600 uppercase tracking-widest mb-2 px-3">Services</div>
                     {services.map((s, i) => (
-                      <motion.div
-                        key={s.path}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 + 0.1 }}
-                      >
-                        <Link
-                          to={s.path}
-                          onClick={() => setMobileOpen(false)}
-                          className="block px-3 py-3 text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                        >
-                          <span className="font-medium">{s.name}</span>
-                          <span className="block text-xs text-slate-500 mt-0.5">{s.desc}</span>
+                      <motion.div key={s.path} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 + 0.1 }}>
+                        <Link to={s.path} onClick={() => setMobileOpen(false)} className="block px-3 py-3 text-navy-800 hover:text-gold-700 hover:bg-gold-50 rounded-xl transition-all">
+                          <span className="font-semibold text-sm">{s.name}</span>
+                          <span className="block text-[11px] text-navy-700/70 mt-0.5">{s.desc}</span>
                         </Link>
                       </motion.div>
                     ))}
                   </div>
 
-                  {/* Countries Section */}
                   <div className="pt-4">
-                    <div className="text-xs font-semibold text-royal-400 uppercase tracking-widest mb-3 px-3">
-                      Countries
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="text-[11px] font-bold text-gold-600 uppercase tracking-widest mb-2 px-3">Countries</div>
+                    <div className="grid grid-cols-1 gap-1">
                       {countries.map((c, i) => (
-                        <motion.div
-                          key={c.path}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.05 + 0.15 }}
-                        >
-                          <Link
-                            to={c.path}
-                            onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2.5 text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                          >
-                            <span>{c.flag}</span>
-                            <span className="text-sm">{c.name}</span>
+                        <motion.div key={c.path} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 + 0.15 }}>
+                          <Link to={c.path} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-navy-800 hover:text-gold-700 hover:bg-gold-50 rounded-xl transition-all">
+                            <span className="text-lg">{c.flag}</span>
+                            <span className="text-sm font-medium">{c.name}</span>
                           </Link>
                         </motion.div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="pt-4 space-y-2">
-                    <MobileNavLink to="/programs" onClick={() => setMobileOpen(false)}>
-                      Programs
-                    </MobileNavLink>
-                    <MobileNavLink to="/contact" onClick={() => setMobileOpen(false)}>
-                      Contact
-                    </MobileNavLink>
-                    <Link
-                      to="/apply"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 px-3 py-3 rounded-xl font-semibold text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 transition-all"
-                    >
-                      <FileText size={18} />
-                      Apply Now
+                  <div className="pt-4 space-y-1">
+                    <MobileNavLink to="/programs" onClick={() => setMobileOpen(false)}>Programs</MobileNavLink>
+                    <MobileNavLink to="/reviews"  onClick={() => setMobileOpen(false)}>Reviews</MobileNavLink>
+                    <MobileNavLink to="/contact"  onClick={() => setMobileOpen(false)}>Contact</MobileNavLink>
+                    <Link to="/apply" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-xl font-semibold text-gold-700 hover:text-gold-800 hover:bg-gold-50 transition-all">
+                      <FileText size={18} /> Apply Now
                     </Link>
                   </div>
 
-                  {/* Auth Section */}
-                  <div className="pt-6 mt-6 border-t border-white/5">
+                  <div className="pt-6 mt-4 border-t border-navy-900/10 space-y-3">
+                    <a href="tel:+919925064666" className="flex items-center gap-3 px-3 py-3 rounded-xl bg-gold-50 text-navy-900 font-semibold">
+                      <Phone size={18} className="text-gold-600" /> +91 99250 64666
+                    </a>
                     {user ? (
                       <div className="space-y-2">
-                        <Link
-                          to="/dashboard"
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center gap-3 px-3 py-3 text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                        >
+                        <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-3 text-navy-800 hover:bg-gold-50 rounded-xl transition-all">
                           <User size={18} /> Dashboard
                         </Link>
-                        <button
-                          onClick={() => { handleSignOut(); setMobileOpen(false); }}
-                          className="flex items-center gap-3 px-3 py-3 w-full text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all"
-                        >
+                        <button onClick={() => { handleSignOut(); setMobileOpen(false); }} className="flex items-center gap-3 px-3 py-3 w-full text-left text-red-600 hover:bg-red-50 rounded-xl transition-all">
                           <LogOut size={18} /> Sign Out
                         </button>
                       </div>
                     ) : (
                       <div className="flex flex-col gap-3">
-                        <Link
-                          to="/login"
-                          onClick={() => setMobileOpen(false)}
-                          className="btn-outline text-center py-3 rounded-xl"
-                        >
-                          Login
-                        </Link>
+                        <Link to="/login" onClick={() => setMobileOpen(false)} className="btn-outline text-center py-3 rounded-xl">Login</Link>
                         <Link to="/signup" onClick={() => setMobileOpen(false)}>
-                          <button className="btn-primary w-full py-3 flex items-center justify-center gap-2">
-                            <Sparkles size={16} /> Get Started
-                          </button>
+                          <button className="btn-gold w-full py-3">Get Started</button>
                         </Link>
                       </div>
                     )}
@@ -451,22 +311,19 @@ export default function Navbar() {
   )
 }
 
-// Desktop Nav Link Component
 function NavLink({ to, children }) {
   const location = useLocation()
   const isActive = location.pathname === to
-
   return (
     <Link
       to={to}
-      className={`relative px-4 py-2 text-sm font-medium transition-colors ${isActive ? 'text-white' : 'text-slate-400 hover:text-white'
-        }`}
+      className={`relative px-3.5 py-2 text-sm font-medium transition-colors ${isActive ? 'text-navy-900' : 'text-navy-800/80 hover:text-gold-700'}`}
     >
       {children}
       {isActive && (
         <motion.div
           layoutId="activeNav"
-          className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-royal-500 to-teal-500 rounded-full"
+          className="absolute bottom-0 left-3.5 right-3.5 h-0.5 bg-gradient-to-r from-gold-500 to-sky-500 rounded-full"
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         />
       )}
@@ -474,19 +331,14 @@ function NavLink({ to, children }) {
   )
 }
 
-// Mobile Nav Link Component
 function MobileNavLink({ to, onClick, children }) {
   const location = useLocation()
   const isActive = location.pathname === to
-
   return (
     <Link
       to={to}
       onClick={onClick}
-      className={`block px-3 py-3 rounded-xl font-medium transition-all ${isActive
-        ? 'text-white bg-white/5'
-        : 'text-slate-300 hover:text-white hover:bg-white/5'
-        }`}
+      className={`block px-3 py-3 rounded-xl font-medium transition-all ${isActive ? 'text-gold-700 bg-gold-50' : 'text-navy-800 hover:text-gold-700 hover:bg-gold-50'}`}
     >
       {children}
     </Link>

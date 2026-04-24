@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
 
+# Disallow sensitive routes
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /reset-password
+Disallow: /forgot-password
+
 # Sitemap
 Sitemap: https://siddhivinayakoverseas.com/sitemap.xml

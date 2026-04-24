@@ -1,41 +1,48 @@
 import { Helmet } from 'react-helmet-async'
 
-export default function SEO({ 
-  title, 
-  description, 
-  keywords, 
-  ogTitle, 
-  ogDescription, 
-  ogImage, 
+/**
+ * Centralised SEO for Siddhivinayak Overseas.
+ * Passes through standard tags + OpenGraph + Twitter card.
+ */
+export default function SEO({
+  title,
+  description,
+  keywords,
+  ogTitle,
+  ogDescription,
+  ogImage,
   ogUrl,
-  canonical 
+  canonical,
 }) {
-  const siteName = 'SiddhivinayakOverseas'
-  const fullTitle = `${title} | ${siteName}`
-  const defaultDescription = 'Trusted immigration consultancy with 15+ years experience and 98% success rate. Expert guidance for work permits, study visas, and permanent residency.'
-  const defaultKeywords = 'immigration consultant, work permit, study visa, Canada PR, Australia visa, Germany Blue Card, UK skilled worker visa, USA H1B'
-  
+  const siteName = 'Siddhivinayak Overseas'
+  const fullTitle = title ? `${title} | ${siteName}` : `${siteName} | Study Abroad Consultants for UK, Germany & France`
+  const defaultDescription =
+    'Premium overseas education consultancy for UK, Germany and France. Expert university admissions, UK Visa & COS assistance, 98% visa success rate. Book a free consultation today.'
+  const defaultKeywords =
+    'study abroad consultants India, study in UK from India, Germany student visa consultant, France study abroad consultancy, UK COS assistance, overseas education consultants, university admissions India'
+
   return (
     <Helmet>
-      {/* Standard Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="description" content={description || defaultDescription} />
       <meta name="keywords" content={keywords || defaultKeywords} />
-      
-      {/* Open Graph / Facebook */}
+      <meta name="theme-color" content="#87CEEB" />
+
+      {/* Open Graph */}
       <meta property="og:type" content="website" />
+      <meta property="og:site_name" content={siteName} />
       <meta property="og:title" content={ogTitle || fullTitle} />
       <meta property="og:description" content={ogDescription || description || defaultDescription} />
       <meta property="og:image" content={ogImage || '/og-image.jpg'} />
-      <meta property="og:url" content={ogUrl || window.location.href} />
-      
+      <meta property="og:url" content={ogUrl || (typeof window !== 'undefined' ? window.location.href : 'https://siddhivinayakoverseas.com/')} />
+      <meta property="og:locale" content="en_IN" />
+
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={ogTitle || fullTitle} />
       <meta name="twitter:description" content={ogDescription || description || defaultDescription} />
       <meta name="twitter:image" content={ogImage || '/og-image.jpg'} />
-      
-      {/* Canonical */}
+
       {canonical && <link rel="canonical" href={canonical} />}
     </Helmet>
   )

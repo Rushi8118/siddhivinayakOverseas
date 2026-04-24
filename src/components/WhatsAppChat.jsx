@@ -4,19 +4,19 @@ import { X, Send, ChevronDown } from 'lucide-react'
 import { FaWhatsapp } from 'react-icons/fa'
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-const WHATSAPP_NUMBER = '919925064666'  // country code + number, no + or spaces
-const AGENT_NAME = 'SiddhivinayakOverseas'
-const AGENT_ROLE = 'Immigration Consultant'
-const AGENT_AVATAR = null            // set to an image URL to use a photo
+const WHATSAPP_NUMBER = '919925064666'          // country code + number, no + or spaces
+const AGENT_NAME      = 'Siddhivinayak Overseas'
+const AGENT_ROLE      = 'Study Abroad Counsellor'
+const AGENT_AVATAR    = null
 
-const GREETING_DELAY = 3000           // ms before popup auto-opens
-const GREETING_MSG = "👋 Hi there! Welcome to SiddhivinayakOverseas.\n\nI'm here to help you with visa applications, work permits, study visas and immigration queries.\n\nHow can I assist you today?"
+const GREETING_DELAY = 3500
+const GREETING_MSG   = "Hi! Welcome to Siddhivinayak Overseas.\n\nWe help Indian students study in the UK, Germany and France with admissions and visa support.\n\nHow can we help you today?"
 
 const QUICK_REPLIES = [
-  'I want to apply for a Work Permit 🌍',
-  'Tell me about Study Visa options 🎓',
-  'How do I get Permanent Residency? 🏠',
-  'Book a free consultation 📞',
+  'I want to study in the UK',
+  'Tell me about Germany options',
+  'Study in France inquiry',
+  'Book a free consultation',
 ]
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -25,12 +25,11 @@ function buildWaLink(message) {
 }
 
 export default function WhatsAppChat() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen]   = useState(false)
   const [input, setInput] = useState('')
   const [badge, setBadge] = useState(true)
   const inputRef = useRef(null)
 
-  // Auto-open after delay (once per session)
   useEffect(() => {
     if (sessionStorage.getItem('wa_opened')) return
     const t = setTimeout(() => {
@@ -40,7 +39,6 @@ export default function WhatsAppChat() {
     return () => clearTimeout(t)
   }, [])
 
-  // Focus input when opened
   useEffect(() => {
     if (open) {
       setBadge(false)
@@ -74,10 +72,10 @@ export default function WhatsAppChat() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ delay: 0.5 }}
-              className="glass-dark rounded-2xl px-4 py-2 text-sm text-white font-medium shadow-premium border border-white/10 cursor-pointer"
+              className="bg-white/95 backdrop-blur-xl rounded-2xl px-4 py-2 text-sm text-navy-900 font-medium shadow-premium border border-gold-300/50 cursor-pointer"
               onClick={() => setOpen(true)}
             >
-              💬 Chat with us
+              Chat with us on WhatsApp
             </motion.div>
           )}
         </AnimatePresence>
@@ -101,7 +99,6 @@ export default function WhatsAppChat() {
             )}
           </AnimatePresence>
 
-          {/* Notification badge */}
           <AnimatePresence>
             {badge && (
               <motion.span
@@ -125,8 +122,8 @@ export default function WhatsAppChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.92 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 rounded-3xl overflow-hidden shadow-2xl border border-white/10"
-            style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06)' }}
+            className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 rounded-3xl overflow-hidden border border-white/90"
+            style={{ boxShadow: '0 25px 60px rgba(15, 42, 68, 0.25), 0 0 0 1px rgba(255,255,255,0.4)' }}
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-green-500 px-5 py-4 flex items-center justify-between">
@@ -138,43 +135,40 @@ export default function WhatsAppChat() {
                       : <FaWhatsapp size={22} />
                     }
                   </div>
-                  {/* Online indicator */}
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-300 border-2 border-green-600 rounded-full" />
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm leading-tight">{AGENT_NAME}</p>
-                  <p className="text-green-100 text-xs">{AGENT_ROLE} · Online</p>
+                  <p className="text-green-50 text-xs">{AGENT_ROLE} · Online</p>
                 </div>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white/85 hover:text-white hover:bg-white/20 transition-colors"
+                aria-label="Close chat"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Chat body */}
-            <div className="bg-[#0a1628] px-4 pt-5 pb-3">
-              {/* Greeting bubble */}
+            {/* Body */}
+            <div className="bg-gradient-to-b from-sky-50 to-white px-4 pt-5 pb-3">
               <div className="flex gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-green-600/30 flex-shrink-0 flex items-center justify-center">
-                  <FaWhatsapp size={14} className="text-green-400" />
+                <div className="w-8 h-8 rounded-full bg-green-100 flex-shrink-0 flex items-center justify-center">
+                  <FaWhatsapp size={14} className="text-green-600" />
                 </div>
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
-                  className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-slate-200 leading-relaxed whitespace-pre-line"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-navy-900 leading-relaxed whitespace-pre-line bg-white border border-sky-200 shadow-soft"
                 >
                   {GREETING_MSG}
                 </motion.div>
               </div>
 
-              {/* Quick replies */}
               <div className="mb-4">
-                <p className="text-slate-500 text-xs mb-2 ml-1">Quick options:</p>
+                <p className="text-navy-700/60 text-xs mb-2 ml-1 font-medium">Quick options:</p>
                 <div className="flex flex-col gap-2">
                   {QUICK_REPLIES.map((reply, i) => (
                     <motion.button
@@ -183,7 +177,7 @@ export default function WhatsAppChat() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 + i * 0.07 }}
                       onClick={() => sendMessage(reply)}
-                      className="text-left text-sm px-4 py-2.5 rounded-xl text-green-300 border border-green-500/25 hover:bg-green-500/10 hover:border-green-500/50 hover:text-green-200 transition-all"
+                      className="text-left text-sm px-4 py-2.5 rounded-xl text-green-700 bg-white border border-green-300/50 hover:bg-green-50 hover:border-green-500/70 transition-all font-medium"
                     >
                       {reply}
                     </motion.button>
@@ -192,31 +186,32 @@ export default function WhatsAppChat() {
               </div>
             </div>
 
-            {/* Input bar */}
-            <div className="bg-[#0a1628] border-t border-white/5 px-3 py-3 flex items-center gap-2">
+            {/* Input */}
+            <div className="bg-white border-t border-sky-200/70 px-3 py-3 flex items-center gap-2">
               <input
                 ref={inputRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder="Type your message…"
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 outline-none focus:border-green-500/40 focus:bg-white/8 transition-all"
+                placeholder="Type your message..."
+                className="flex-1 bg-sky-50 border border-sky-200 rounded-xl px-4 py-2.5 text-sm text-navy-900 placeholder:text-navy-700/40 outline-none focus:border-green-500/50 focus:bg-white transition-all"
+                aria-label="Message"
               />
               <motion.button
                 onClick={() => sendMessage()}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.93 }}
                 disabled={!input.trim()}
+                aria-label="Send message"
                 className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white shadow-lg shadow-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity flex-shrink-0"
               >
                 <Send size={16} />
               </motion.button>
             </div>
 
-            {/* WhatsApp branding */}
-            <div className="bg-[#0a1628] text-center pb-3 flex items-center justify-center gap-1.5">
+            <div className="bg-white text-center pb-3 flex items-center justify-center gap-1.5">
               <FaWhatsapp size={13} className="text-green-500" />
-              <span className="text-slate-600 text-[11px]">Powered by WhatsApp</span>
+              <span className="text-navy-700/50 text-[11px]">Powered by WhatsApp</span>
             </div>
           </motion.div>
         )}
