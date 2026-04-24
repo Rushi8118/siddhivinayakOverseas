@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import WhatsAppChat from './components/WhatsAppChat'
+import PlanePageTransition from './components/PlanePageTransition'
 import { AlertTriangle } from 'lucide-react'
 import { supabase } from './lib/supabaseClient'
 import HomePage from './pages/HomePage'
@@ -66,6 +67,7 @@ function AppContent() {
   return (
     <div className="flex flex-col min-h-screen">
       <ScrollToTop />
+      <PlanePageTransition />
       <SupabaseWarning />
       {showLayout && <Navbar />}
       <main className="flex-1">

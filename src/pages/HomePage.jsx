@@ -9,7 +9,6 @@ import {
 } from 'lucide-react'
 
 import Globe3D from '../components/Globe3D'
-import PlaneScroll3D from '../components/PlaneScroll3D'
 import SEO from '../components/SEO'
 import { submitConsultation } from '../lib/supabaseClient'
 import { customerReviews, getReviewInitials } from '../data/reviews'
@@ -161,7 +160,7 @@ function FloatingCard({ children, delay = 0, className = '' }) {
   )
 }
 
-// ─── COMPONENT ─────────────────────────────────────────────────────────���─────
+// ─── COMPONENT ──────────────────────────────────────���──────────────────���─────
 export default function HomePage() {
   const [formData, setFormData] = useState({
     name: '', email: '',
@@ -210,9 +209,6 @@ export default function HomePage() {
         description="Siddhivinayak Overseas — premium overseas education consultancy for UK, Germany and France. University admissions, UK Visa & COS assistance, 98% visa success rate. Book a free consultation."
         keywords="study abroad consultants India, study in UK from India, Germany student visa consultant, France study abroad consultancy, UK COS assistance, overseas education consultants Surat"
       />
-
-      {/* Scroll-driven 3D airplane flying left → right across the viewport */}
-      <PlaneScroll3D />
 
       {/* ========== HERO ========== */}
       <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
