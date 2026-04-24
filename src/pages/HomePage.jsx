@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 
 import Globe3D from '../components/Globe3D'
+import PlaneScroll3D from '../components/PlaneScroll3D'
 import SEO from '../components/SEO'
 import { submitConsultation } from '../lib/supabaseClient'
 import { customerReviews, getReviewInitials } from '../data/reviews'
@@ -160,7 +161,7 @@ function FloatingCard({ children, delay = 0, className = '' }) {
   )
 }
 
-// ─── COMPONENT ───────────────────────────────────────────────────────────────
+// ─── COMPONENT ─────────────────────────────────────────────────────────���─────
 export default function HomePage() {
   const [formData, setFormData] = useState({
     name: '', email: '',
@@ -210,19 +211,13 @@ export default function HomePage() {
         keywords="study abroad consultants India, study in UK from India, Germany student visa consultant, France study abroad consultancy, UK COS assistance, overseas education consultants Surat"
       />
 
+      {/* Scroll-driven 3D airplane flying left → right across the viewport */}
+      <PlaneScroll3D />
+
       {/* ========== HERO ========== */}
       <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
         <div className="absolute inset-0 hero-bg" />
         <div className="absolute inset-0 dot-pattern opacity-40" />
-
-        {/* Animated Plane crossing hero */}
-        <motion.div
-          className="absolute left-0 top-1/3 text-navy-700/40 z-[1] plane-path"
-          initial={false}
-          aria-hidden="true"
-        >
-          <Plane size={42} className="rotate-12 text-gold-500" strokeWidth={1.5} />
-        </motion.div>
 
         <motion.div
           className="absolute top-10 left-10 w-[460px] h-[460px] rounded-full"
